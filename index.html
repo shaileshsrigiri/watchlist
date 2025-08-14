@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Watchlist (Offline)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" href="./icon-192.png">
+  <style>
+    :root { --bg:#0b1020; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#60a5fa; --ok:#34d399; --warn:#f59e0b; }
+    * { box-sizing:border-box; }
+    body { margin:0; font:16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:linear-gradient(180deg, #0b1020, #0b1020 40%, #0e1630); color:var(--ink); }
+    header { position:sticky; top:0; backdrop-filter: blur(8px); background:rgba(11,16,32,.65); border-bottom:1px solid #1f2937; z-index:10; }
+    .wrap { max-width:1100px; margin:0 auto; padding:16px; }
+    h1 { margin:8px 0 4px; font-size:22px; font-weight:700; }
+    .sub { color:var(--muted); font-size:13px; margin-bottom:8px; }
+    .grid { display:grid; gap:12px; }
+    @media (min-width:900px){ .grid-2 { grid-template-columns: 1.2fr .8fr; } }
+    .card { background:var(--panel); border:1px solid #1f2937; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25); }
+    .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    input, select, textarea { width:100%; background:#0b1226; color:var(--ink); border:1px solid #1f2937; border-radius:10px; padding:10px 12px; outline:none; }
+    input[type="number"] { -moz-appearance:textfield; }
+    input::placeholder, textarea::placeholder { color:#6b7280; }
+    button { background:#172554; color:#e5e7eb; border:1px solid #1f2937; padding:10px 12px; border-radius:10px; cursor:pointer; }
+    button:hover { background:#1e3a8a; }
+    .btn-ghost { background:transparent; }
+    .btn-ok { background:#065f46; border-color:#064e3b; }
+    .btn-warn { background:#7c2d12; border-color:#6b1d10; }
+    .tags { display:flex; gap:6px; flex-wrap:wrap; }
+    .tag { background:#0b1226; border:1px solid #1f2937; padding:2px 8px; border-radius:999px; font-size:12px; color:#a5b4fc; }
+    .list { display:grid; gap:10px; margin-top:10px; }
+    .item { display:grid; gap:8px; grid-template-columns: 1fr auto; align-items:center; background:#0b1226; border:1px solid #1f2937; border-radius:12px; padding:12px; }
+    .item small { color:var(--muted); }
+    .pill { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #1f2937; }
+    .pill.movie { color:#fca5a5; }
+    .pill.show { color:#93c5fd; }
+    .row { display:grid; gap:8px; }
+    @media (min-width:700px){ .row-3 { grid-template-columns: repeat(3, 1fr); } .row-2 { grid-template-columns: repeat(2, 1fr); } }
+    .sep { height:1px; background:#1f2937; margin:8px 0; }
+    .muted { color:var(--muted); }
+    .right { display:flex; gap:6px; align-items:center; }
+    .strike { text-decoration: line-through; color:#6b7280; }
+    .kicker { font-size:12px; color:#a7f3d0; }
+    .footer { color:#64748b; font-size:12px; margin-top:8px; text-align:center; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>🎬 Offline Watchlist</h1>
+    <div class="sub">Track movies & shows by genre, director, IMDb. Works offline. Import/Export JSON.</div>
+    <div class="toolbar">
+      <button id="btn-export">Export JSON</button>
+      <label class="btn-ghost">
+        Import JSON
+        <input id="file-import" type="file" accept="application/json" hidden />
+      </label>
+      <button id="btn-clear" class="btn-warn" title="Clear all data (kept safe behind a confirm)">Clear All</button>
+      <span class="muted">•</span>
+      <span class="muted" id="syncState">offline-ready</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap grid grid-2" style="margin-top:12px;">
+  <!-- Left: List & Filters -->
+  <section class="card">
+    <h2 style="margin:0 0 8px;">Your List</h2>
+    <div class="row row-3">
+      <input id="q" placeholder="Search title…" />
+      <input id="f-director" placeholder="Filter by director…" />
+      <select id="f-genre" title="Genre filter">
+        <option value="">All genres</option>
+      </select>
+    </div>
+    <div class="row row-3" style="margin-top:8px;">
+      <label><input id="f-unwatched" type="checkbox" /> Unwatched only</label>
+      <input id="f-minimdb" type="number" min="0" max="10" step="0.1" placeholder="Min IMDb (e.g., 7.5)" />
+      <select id="sort">
+        <option value="imdb-desc">Sort: IMDb ⬇︎</option>
+        <option value="imdb-asc">Sort: IMDb ⬆︎</option>
+        <option value="title-asc">Sort: Title A–Z</option>
+        <option value="year-desc">Sort: Year ⬇︎</option>
+        <option value="year-asc">Sort: Year ⬆︎</option>
+        <option value="added-desc">Sort: Recently Added</option>
+      </select>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="sep"></div>
+    <div class="footer">Tip: Click a genre chip to quick-filter. Toggle “watched” in the item menu.</div>
+  </section>
+
+  <!-- Right: Add & Recommendations -->
+  <aside class="grid" style="gap:12px;">
+    <section class="card">
+      <h3 style="margin-top:0;">Add Title</h3>
+      <div class="row row-2">
+        <input id="in-title" placeholder="Title *" />
+        <select id="in-type">
+          <option value="movie">Movie</option>
+          <option value="show">Show</option>
+        </select>
+      </div>
+      <div class="row row-3" style="margin-top:8px;">
+        <input id="in-year" type="number" placeholder="Year" />
+        <input id="in-director" placeholder="Director(s)" />
+        <input id="in-imdb" type="number" step="0.1" min="0" max="10" placeholder="IMDb (0–10)" />
+      </div>
+      <input id="in-genres" placeholder="Genres (comma separated, e.g., Drama, Sci-Fi)" style="margin-top:8px;" />
+      <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="margin-top:8px;"></textarea>
+      <div class="toolbar" style="margin-top:8px;">
+        <button id="btn-add" class="btn-ok">Add</button>
+        <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
+      </div>
+      <div class="kicker" id="addMsg" aria-live="polite"></div>
+    </section>
+
+    <section class="card">
+      <h3 style="margin-top:0;">Recommendations</h3>
+      <div class="sub">Picks are based on your most frequent genres/directors among items you liked (IMDb ≥ 7) or already added.</div>
+      <div class="toolbar">
+        <button id="btn-reco">Refresh Picks</button>
+        <select id="reco-scope">
+          <option value="unwatched">Unwatched only</option>
+          <option value="all">All items</option>
+        </select>
+        <select id="reco-size">
+          <option value="5">Top 5</option>
+          <option value="10">Top 10</option>
+          <option value="15">Top 15</option>
+        </select>
+      </div>
+      <div id="reco" class="list"></div>
+    </section>
+  </aside>
+</main>
+
+<script>
+/* ==== tiny IndexedDB wrapper ================================================= */
+const dbName = 'watchlist-db-v1';
+const storeName = 'items';
+let db;
+function openDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(dbName, 1);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      const s = d.createObjectStore(storeName, { keyPath: 'id', autoIncrement: true });
+      s.createIndex('addedAt', 'addedAt');
+      s.createIndex('title', 'title');
+      s.createIndex('imdb', 'imdb');
+      s.createIndex('watched', 'watched');
+    };
+    req.onsuccess = () => { db = req.result; res(); };
+    req.onerror = () => rej(req.error);
+  });
+}
+function tx(mode='readonly') { return db.transaction(storeName, mode).objectStore(storeName); }
+function addItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').add(item); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+function updateItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').put(item); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function deleteAll(){ return new Promise((res,rej)=>{ const r=tx('readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function getAll(){ return new Promise((res,rej)=>{ const r=tx().getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+
+/* ==== state + helpers ======================================================== */
+let items = [];
+const $ = (id)=>document.getElementById(id);
+const listEl = $('list');
+const genreFilter = $('f-genre');
+const syncState = $('syncState');
+
+function uniq(arr){ return [...new Set(arr)]; }
+function normalizeGenres(s){ return s.split(',').map(g=>g.trim()).filter(Boolean); }
+function collectGenres(all){ return uniq(all.flatMap(x=>x.genres||[])).sort((a,b)=>a.localeCompare(b)); }
+function updateGenreFilterOptions(){
+  const selected = genreFilter.value;
+  const genres = collectGenres(items);
+  genreFilter.innerHTML = `<option value="">All genres</option>` + genres.map(g=>`<option>${g}</option>`).join('');
+  if (genres.includes(selected)) genreFilter.value = selected;
+}
+function applyFilters(){
+  const q = $('q').value.trim().toLowerCase();
+  const d = $('f-director').value.trim().toLowerCase();
+  const g = genreFilter.value;
+  const uw = $('f-unwatched').checked;
+  const min = parseFloat($('f-minimdb').value);
+  let out = items.filter(it=>{
+    if (q && !it.title.toLowerCase().includes(q)) return false;
+    if (d && !(it.director||'').toLowerCase().includes(d)) return false;
+    if (g && !(it.genres||[]).includes(g)) return false;
+    if (uw && it.watched) return false;
+    if (!isNaN(min) && (it.imdb ?? -1) < min) return false;
+    return true;
+  });
+  const sort = $('sort').value;
+  out.sort((a,b)=>{
+    switch(sort){
+      case 'imdb-desc': return (b.imdb??-1)-(a.imdb??-1);
+      case 'imdb-asc': return (a.imdb??-1)-(b.imdb??-1);
+      case 'title-asc': return a.title.localeCompare(b.title);
+      case 'year-desc': return (b.year??0)-(a.year??0);
+      case 'year-asc': return (a.year??0)-(b.year??0);
+      case 'added-desc': return b.addedAt - a.addedAt;
+      default: return 0;
+    }
+  });
+  renderList(out);
+}
+function renderList(arr){
+  listEl.innerHTML = arr.map(it=>{
+    const tags = (it.genres||[]).map(g=>`<button class="tag" data-chip-genre="${g}" title="Filter by ${g}">${g}</button>`).join('');
+    const pill = `<span class="pill ${it.type==='show'?'show':'movie'}">${it.type}</span>`;
+    const imdb = (it.imdb ?? '').toString();
+    const titleCls = it.watched ? 'strike' : '';
+    const notes = it.notes ? `<div class="muted" style="margin-top:4px;">${escapeHTML(it.notes)}</div>` : '';
+    return `
+    <div class="item" data-id="${it.id}">
+      <div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          ${pill}
+          <strong class="${titleCls}">${escapeHTML(it.title)}</strong>
+          ${it.year ? `<small>(${it.year})</small>`:''}
+          ${imdb ? `<small>IMDb: ${imdb}</small>`:''}
+          ${it.director ? `<small>• Dir: ${escapeHTML(it.director)}</small>`:''}
+        </div>
+        <div class="tags" style="margin-top:6px;">${tags}</div>
+        ${notes}
+      </div>
+      <div class="right">
+        <button data-toggle="${it.id}">${it.watched ? 'Unwatch' : 'Watched'}</button>
+        <button class="btn-ghost" data-edit="${it.id}">Edit</button>
+        <button class="btn-ghost" data-delete="${it.id}">Delete</button>
+      </div>
+    </div>`;
+  }).join('') || `<div class="muted">No items yet. Add something on the right →</div>`;
+}
+
+function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+
+/* ==== recommendations ======================================================== */
+function topN(arr, n){ return arr.slice(0, n); }
+function frequencyMap(arr){ const m=new Map(); arr.forEach(x=>m.set(x,(m.get(x)||0)+1)); return m; }
+function getRecommendations(){
+  const scope = $('reco-scope').value; // 'unwatched'|'all'
+  const size = parseInt($('reco-size').value,10);
+  // rank genres/directors by frequency among liked (IMDb >= 7) or all if none rated
+  const liked = items.filter(x=>(x.imdb??0)>=7);
+  const seed = liked.length? liked : items;
+  const gFreq = frequencyMap(seed.flatMap(x=>x.genres||[]));
+  const dFreq = frequencyMap(seed.map(x=>x.director).filter(Boolean));
+  function score(it){
+    const gScore = (it.genres||[]).reduce((acc,g)=>acc+(gFreq.get(g)||0),0);
+    const dScore = (dFreq.get(it.director)||0);
+    const imdb = (it.imdb??0) * 0.75; // weight IMDb
+    const bonus = it.watched? -5 : 3; // prefer unwatched
+    return gScore + dScore + imdb + bonus;
+  }
+  let pool = items.slice();
+  if (scope==='unwatched') pool = pool.filter(x=>!x.watched);
+  pool.sort((a,b)=> score(b)-score(a));
+  return topN(pool, size);
+}
+function renderRecommendations(){
+  const picks = getRecommendations();
+  const el = $('reco');
+  el.innerHTML = picks.map(it=>{
+    return `<div class="item">
+      <div>
+        <strong>${escapeHTML(it.title)}</strong> ${it.year?`<small>(${it.year})</small>`:''}
+        ${it.imdb!=null?`<small>• IMDb ${it.imdb}</small>`:''}
+        ${it.director?`<small>• Dir: ${escapeHTML(it.director)}</small>`:''}
+        <div class="tags" style="margin-top:6px;">${(it.genres||[]).map(g=>`<span class="tag">${g}</span>`).join('')}</div>
+      </div>
+      <div class="right"><span class="pill ${it.type==='show'?'show':'movie'}">${it.type}</span></div>
+    </div>`;
+  }).join('') || `<div class="muted">Add a few items to see picks.</div>`;
+}
+
+/* ==== import/export ========================================================== */
+$('btn-export').addEventListener('click', async ()=>{
+  const data = await getAll();
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href:url, download:'watchlist.json' });
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
+$('file-import').addEventListener('change', async (e)=>{
+  const file = e.target.files?.[0];
+  if(!file) return;
+  const text = await file.text();
+  try{
+    const arr = JSON.parse(text);
+    if(!Array.isArray(arr)) throw new Error('Invalid file');
+    await deleteAll();
+    for (const x of arr) {
+      // drop id so new ids are created; keep fields
+      const {id, ...rest} = x;
+      await addItem({ ...rest, addedAt: Date.now() });
+    }
+    items = await getAll();
+    updateGenreFilterOptions();
+    applyFilters();
+    renderRecommendations();
+  }catch(err){
+    alert('Import failed: ' + err.message);
+  }finally{
+    e.target.value = '';
+  }
+});
+$('btn-clear').addEventListener('click', async ()=>{
+  if(!confirm('This will delete all items. Continue?')) return;
+  await deleteAll();
+  items = [];
+  updateGenreFilterOptions();
+  applyFilters();
+  renderRecommendations();
+});
+
+/* ==== add/edit/delete/toggle ================================================= */
+$('btn-add').addEventListener('click', async ()=>{
+  const title = $('in-title').value.trim();
+  if(!title){ $('addMsg').textContent = 'Title is required.'; return; }
+  const it = {
+    type: $('in-type').value,
+    title,
+    year: numOrNull($('in-year').value),
+    director: blankToNull($('in-director').value),
+    imdb: numOrNull($('in-imdb').value),
+    genres: normalizeGenres($('in-genres').value),
+    notes: blankToNull($('in-notes').value),
+    watched: $('in-watched').checked,
+    addedAt: Date.now()
+  };
+  await addItem(it);
+  items = await getAll();
+  clearAddForm();
+  $('addMsg').textContent = 'Added ✔';
+  setTimeout(()=>$('addMsg').textContent='', 1500);
+  updateGenreFilterOptions();
+  applyFilters();
+  renderRecommendations();
+});
+function clearAddForm(){
+  $('in-title').value=''; $('in-year').value=''; $('in-director').value='';
+  $('in-imdb').value=''; $('in-genres').value=''; $('in-notes').value='';
+  $('in-watched').checked=false; $('in-type').value='movie';
+}
+function numOrNull(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
+function blankToNull(v){ const s=v.trim(); return s? s : null; }
+
+listEl.addEventListener('click', async (e)=>{
+  const btn = e.target.closest('button');
+  const chip = e.target.closest('[data-chip-genre]');
+  if (chip){
+    genreFilter.value = chip.dataset.chipGenre;
+    applyFilters();
+    return;
+  }
+  if(!btn) return;
+  const id = parseInt(btn.dataset.toggle || btn.dataset.edit || btn.dataset.delete, 10);
+  const item = items.find(x=>x.id===id);
+  if(!item) return;
+  if(btn.dataset.toggle){
+    item.watched = !item.watched;
+    await updateItem(item);
+  } else if (btn.dataset.delete){
+    if(!confirm(`Delete "${item.title}"?`)) return;
+    // delete by replacing store contents minus this id
+    const rest = items.filter(x=>x.id!==id);
+    await deleteAll();
+    for (const r of rest) await addItem({ ...r, id: undefined }); // new ids
+  } else if (btn.dataset.edit){
+    const title = prompt('Title', item.title) ?? item.title;
+    const year = prompt('Year', item.year ?? '') ?? item.year;
+    const director = prompt('Director(s)', item.director ?? '') ?? item.director;
+    const imdb = prompt('IMDb (0–10)', item.imdb ?? '') ?? item.imdb;
+    const genres = prompt('Genres (comma separated)', (item.genres||[]).join(', ')) ?? (item.genres||[]).join(', ');
+    const notes = prompt('Notes', item.notes ?? '') ?? item.notes;
+    Object.assign(item, {
+      title: title.trim() || item.title,
+      year: numOrNull(year),
+      director: blankToNull(director||''),
+      imdb: numOrNull(imdb),
+      genres: normalizeGenres(genres||''),
+      notes: blankToNull(notes||'')
+    });
+    await updateItem(item);
+  }
+  items = await getAll();
+  updateGenreFilterOptions();
+  applyFilters();
+  renderRecommendations();
+});
+
+/* ==== filters & recommendations bindings ==================================== */
+['q','f-director','f-genre','f-unwatched','f-minimdb','sort'].forEach(id=>{
+  $(id).addEventListener('input', applyFilters);
+});
+$('btn-reco').addEventListener('click', renderRecommendations);
+$('reco-scope').addEventListener('change', renderRecommendations);
+$('reco-size').addEventListener('change', renderRecommendations);
+
+/* ==== boot ================================================================== */
+(async function boot(){
+  await openDB();
+  items = await getAll();
+  updateGenreFilterOptions();
+  applyFilters();
+  renderRecommendations();
+  registerSW();
+})();
+
+/* ==== service worker ========================================================= */
+function registerSW(){
+  if (!('serviceWorker' in navigator)) { syncState.textContent='no SW'; return; }
+  navigator.serviceWorker.register('./sw.js')
+    .then(()=>{ syncState.textContent='offline-ready'; })
+    .catch(()=>{ syncState.textContent='SW failed'; });
+}
+</script>
+</body>
+</html>

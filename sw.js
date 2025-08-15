@@ -1,5 +1,5 @@
 // Cache-first service worker scoped to /watchlist/
-const CACHE = 'watchlist-cache-v4';
+const CACHE = 'watchlist-cache-v5';
 const BASE = '/watchlist';
 const ASSETS = [
   `${BASE}/`,

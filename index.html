@@ -165,6 +165,7 @@ function openDB() {
 function tx(mode='readonly') { return db.transaction(storeName, mode).objectStore(storeName); }
 function addItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').add(item); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 function updateItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').put(item); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function deleteItemById(id){ return new Promise((res, rej) => { const r = tx('readwrite').delete(id); r.onsuccess = () => res(); r.onerror = () => rej(r.error); }); }
 function deleteAll(){ return new Promise((res,rej)=>{ const r=tx('readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function getAll(){ return new Promise((res,rej)=>{ const r=tx().getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 /* ==== state + helpers ======================================================== */
@@ -370,10 +371,7 @@ listEl.addEventListener('click', async (e)=>{
     await updateItem(item);
   } else if (btn.dataset.delete){
     if(!confirm(`Delete "${item.title}"?`)) return;
-    // delete by replacing store contents minus this id
-    const rest = items.filter(x=>x.id!==id);
-    await deleteAll();
-    for (const r of rest) await addItem({ ...r, id: undefined }); // new ids
+    await deleteItemById(id);
   } else if (btn.dataset.edit){
     const title = prompt('Title', item.title) ?? item.title;
     const year = prompt('Year', item.year ?? '') ?? item.year;

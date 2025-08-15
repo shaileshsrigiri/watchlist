@@ -336,8 +336,16 @@ $('btn-add').addEventListener('click', async ()=>{
     genres: normalizeGenres($('in-genres').value),
     notes: blankToNull($('in-notes').value),
     watched: $('in-watched').checked,
+    imdbId: null,         // <— add
+    tmdbId: null,
     addedAt: Date.now()
   };
+  if (existsByIds(it)) {
+    $('addMsg').textContent = 'Already in your list ✋';
+    setTimeout(() => $('addMsg').textContent = '', 1500);
+    return;
+  }
+
   await addItem(it);
   items = await getAll();
   clearAddForm();
@@ -417,6 +425,24 @@ function registerSW(){
     .then(()=>{ syncState.textContent='offline-ready'; })
     .catch(()=>{ syncState.textContent='SW failed'; });
 }
+    
+function norm(s){ return (s ?? '').trim().toLowerCase().replace(/\s+/g,' '); }
+function keyTitleYear(it){ return `${norm(it.title)}|${it.year ?? ''}`; }
+
+/** return true if an item already exists (by imdbId, tmdbId, or title+year) */
+function existsByIds(candidate){
+  const candImdb = norm(candidate.imdbId);
+  const candTmdb = candidate.tmdbId ?? null;
+  const candKey  = keyTitleYear(candidate);
+
+  return items.some(x => {
+    const imdbMatch  = candImdb && norm(x.imdbId) === candImdb;
+    const tmdbMatch  = candTmdb && (x.tmdbId === candTmdb);
+    const titleMatch = keyTitleYear(x) === candKey; // case-insensitive
+    return imdbMatch || tmdbMatch || titleMatch;
+  });
+}
+
 </script>
 <script>
 // === TMDb & OMDb integration (auto-fill) ===
@@ -507,8 +533,14 @@ $('tmdb-results').addEventListener('click', async (e) => {
       notes: `Cast: ${cast}${production.length ? `\nProd: ${production.join(', ')}`:''}`,
       posterUrl,
       watched: false,
+      imdbId,          // <— add
+      tmdbId: d.id,
       addedAt: Date.now()
     };
+    if (existsByIds(item)) {            // <— add
+      alert('Already in your list.');   // or set addMsg like above
+      return;
+    }
     await addItem(item);
     items = await getAll();
     updateGenreFilterOptions();

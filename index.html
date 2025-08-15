@@ -7,7 +7,6 @@
   <meta name="theme-color" content="#111827" />
   <link rel="manifest" href="/watchlist/manifest.json">
   <link rel="icon" href="/watchlist/icon-192.png">
-
   <style>
     :root { --bg:#0b1020; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --accent:#60a5fa; --ok:#34d399; --warn:#f59e0b; }
     * { box-sizing:border-box; }
@@ -30,11 +29,9 @@
     .btn-warn { background:#7c2d12; border-color:#6b1d10; }
     .tags { display:flex; gap:6px; flex-wrap:wrap; }
     .tag { background:#0b1226; border:1px solid #1f2937; padding:2px 8px; border-radius:999px; font-size:12px; color:#a5b4fc; }
-    .list { display:grid; gap:12px; margin-top:10px; }
-    /* roomier items */
-    .item { display:grid; gap:12px; grid-template-columns: 1fr auto; align-items:center; background:#0b1226; border:1px solid #1f2937; border-radius:12px; padding:14px; }
-    .item strong { font-size:16px; }
-    .item small { color:var(--muted); font-size:12px; }
+    .list { display:grid; gap:10px; margin-top:10px; }
+    .item { display:grid; gap:8px; grid-template-columns: 1fr auto; align-items:center; background:#0b1226; border:1px solid #1f2937; border-radius:12px; padding:12px; }
+    .item small { color:var(--muted); }
     .pill { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #1f2937; }
     .pill.movie { color:#fca5a5; }
     .pill.show { color:#93c5fd; }
@@ -46,19 +43,6 @@
     .strike { text-decoration: line-through; color:#6b7280; }
     .kicker { font-size:12px; color:#a7f3d0; }
     .footer { color:#64748b; font-size:12px; margin-top:8px; text-align:center; }
-
-    /* Collapsible cards */
-    details > summary { cursor:pointer; list-style:none; }
-
-    /* Confirm modal */
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
-    .modal { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
-    .modal h4 { margin: 0 0 8px; }
-    .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
-    .modal button { padding: 10px 12px; border-radius: 10px; border: 1px solid #1f2937; }
-    .modal .danger { background:#7c2d12; border-color:#6b1d10; }
-    .modal .ghost { background: transparent; }
-    .show { display: flex; }
   </style>
 </head>
 <body>
@@ -78,98 +62,85 @@
     </div>
   </div>
 </header>
-
 <main class="wrap grid grid-2" style="margin-top:12px;">
   <!-- Left: List & Filters -->
   <section class="card">
-    <h2 style="margin:0 0 8px;">Your Library</h2>
-
-    <!-- Collapsible filters -->
-    <details id="filters" style="background:#0b1226;border:1px solid #1f2937;border-radius:12px;padding:10px;">
-      <summary><span>Filters & Sort</span> <span class="muted" style="font-size:12px;">(click to toggle)</span></summary>
-      <div class="row row-3" style="margin-top:10px;">
-        <input id="q" placeholder="Search title…" />
-        <input id="f-director" placeholder="Filter by director…" />
-        <select id="f-genre" title="Genre filter">
-          <option value="">All genres</option>
-        </select>
-      </div>
-      <div class="row row-3" style="margin-top:8px;">
-        <label><input id="f-unwatched" type="checkbox" /> Unwatched only</label>
-        <input id="f-minimdb" type="number" min="0" max="10" step="0.1" placeholder="Min IMDb (e.g., 7.5)" />
-        <select id="sort">
-          <option value="imdb-desc">Sort: IMDb ⬇︎</option>
-          <option value="imdb-asc">Sort: IMDb ⬆︎</option>
-          <option value="title-asc">Sort: Title A–Z</option>
-          <option value="year-desc">Sort: Year ⬇︎</option>
-          <option value="year-asc">Sort: Year ⬆︎</option>
-          <option value="added-desc">Sort: Recently Added</option>
-        </select>
-      </div>
-    </details>
-
-    <div class="list" id="list" style="margin-top:12px;"></div>
+    <h2 style="margin:0 0 8px;">Your List</h2>
+    <div class="row row-3">
+      <input id="q" placeholder="Search title…" />
+      <input id="f-director" placeholder="Filter by director…" />
+      <select id="f-genre" title="Genre filter">
+        <option value="">All genres</option>
+      </select>
+    </div>
+    <div class="row row-3" style="margin-top:8px;">
+      <label><input id="f-unwatched" type="checkbox" /> Unwatched only</label>
+      <input id="f-minimdb" type="number" min="0" max="10" step="0.1" placeholder="Min IMDb (e.g., 7.5)" />
+      <select id="sort">
+        <option value="imdb-desc">Sort: IMDb ⬇︎</option>
+        <option value="imdb-asc">Sort: IMDb ⬆︎</option>
+        <option value="title-asc">Sort: Title A–Z</option>
+        <option value="year-desc">Sort: Year ⬇︎</option>
+        <option value="year-asc">Sort: Year ⬆︎</option>
+        <option value="added-desc">Sort: Recently Added</option>
+      </select>
+    </div>
+    <div class="list" id="list"></div>
     <div class="sep"></div>
     <div class="footer">Tip: Click a genre chip to quick-filter. Toggle “watched” in the item menu.</div>
   </section>
-
   <!-- Right: Add & Recommendations -->
   <aside class="grid" style="gap:12px;">
     <section class="card">
-      <details open>
-        <summary><h3 style="margin:0;">Add Title</h3></summary>
-        <div class="row row-2">
-          <input id="in-title" placeholder="Title *" />
-          <select id="in-type">
-            <option value="movie">Movie</option>
-            <option value="show">Show</option>
-          </select>
-        </div>
-        <div class="row row-3" style="margin-top:8px;">
-          <input id="in-year" type="number" placeholder="Year" />
-          <input id="in-director" placeholder="Director(s)" />
-          <input id="in-imdb" type="number" step="0.1" min="0" max="10" placeholder="IMDb (0–10)" />
-        </div>
-        <input id="in-genres" placeholder="Genres (comma separated, e.g., Drama, Sci-Fi)" style="margin-top:8px;" />
-        <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="margin-top:8px;"></textarea>
-        <div class="toolbar" style="margin-top:8px;">
-          <button id="btn-add" class="btn-ok">Add</button>
-          <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
-        </div>
-        <div class="kicker" id="addMsg" aria-live="polite"></div>
-
-        <div class="sep" style="margin-top:12px;"></div>
-        <div class="sub">Search online to auto-fill (TMDb). IMDb rating via OMDb if key is set.</div>
-        <div class="row row-2">
-          <input id="tmdb-query" placeholder="Type a movie/show name…" />
-          <button id="btn-tmdb-search">Search TMDb</button>
-        </div>
-        <div id="tmdb-results" class="list" style="margin-top:8px;"></div>
-      </details>
+      <h3 style="margin-top:0;">Add Title</h3>
+      
+      <div class="row row-2">
+        <input id="in-title" placeholder="Title *" />
+        <select id="in-type">
+          <option value="movie">Movie</option>
+          <option value="show">Show</option>
+        </select>
+      </div>
+      <div class="row row-3" style="margin-top:8px;">
+        <input id="in-year" type="number" placeholder="Year" />
+        <input id="in-director" placeholder="Director(s)" />
+        <input id="in-imdb" type="number" step="0.1" min="0" max="10" placeholder="IMDb (0–10)" />
+      </div>
+      <input id="in-genres" placeholder="Genres (comma separated, e.g., Drama, Sci-Fi)" style="margin-top:8px;" />
+      <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="margin-top:8px;"></textarea>
+      <div class="toolbar" style="margin-top:8px;">
+        <button id="btn-add" class="btn-ok">Add</button>
+        <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
+      </div>
+      <div class="kicker" id="addMsg" aria-live="polite"></div>
+      
+      <div class="sep" style="margin-top:12px;"></div>
+      <div class="sub">Search online to auto-fill (TMDb). IMDb rating via OMDb if key is set.</div>
+      <div class="row row-2">
+        <input id="tmdb-query" placeholder="Type a movie/show name…" />
+        <button id="btn-tmdb-search">Search TMDb</button>
+      </div>
+      <div id="tmdb-results" class="list" style="margin-top:8px;"></div>
     </section>
-
     <section class="card">
-      <details>
-        <summary><h3 style="margin:0;">Recommendations</h3></summary>
-        <div class="sub">Picks are based on your most frequent genres/directors among items you liked (IMDb ≥ 7) or already added.</div>
-        <div class="toolbar">
-          <button id="btn-reco">Refresh Picks</button>
-          <select id="reco-scope">
-            <option value="unwatched">Unwatched only</option>
-            <option value="all">All items</option>
-          </select>
-          <select id="reco-size">
-            <option value="5">Top 5</option>
-            <option value="10">Top 10</option>
-            <option value="15">Top 15</option>
-          </select>
-        </div>
-        <div id="reco" class="list"></div>
-      </details>
+      <h3 style="margin-top:0;">Recommendations</h3>
+      <div class="sub">Picks are based on your most frequent genres/directors among items you liked (IMDb ≥ 7) or already added.</div>
+      <div class="toolbar">
+        <button id="btn-reco">Refresh Picks</button>
+        <select id="reco-scope">
+          <option value="unwatched">Unwatched only</option>
+          <option value="all">All items</option>
+        </select>
+        <select id="reco-size">
+          <option value="5">Top 5</option>
+          <option value="10">Top 10</option>
+          <option value="15">Top 15</option>
+        </select>
+      </div>
+      <div id="reco" class="list"></div>
     </section>
   </aside>
 </main>
-
 <script src="/watchlist/env.js"></script>
 <script>
 /* ==== tiny IndexedDB wrapper ================================================= */
@@ -194,17 +165,14 @@ function openDB() {
 function tx(mode='readonly') { return db.transaction(storeName, mode).objectStore(storeName); }
 function addItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').add(item); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 function updateItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').put(item); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
-function deleteItem(id){ return new Promise((res,rej)=>{ const r=tx('readwrite').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function deleteAll(){ return new Promise((res,rej)=>{ const r=tx('readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function getAll(){ return new Promise((res,rej)=>{ const r=tx().getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
-
 /* ==== state + helpers ======================================================== */
 let items = [];
 const $ = (id)=>document.getElementById(id);
 const listEl = $('list');
 const genreFilter = $('f-genre');
 const syncState = $('syncState');
-
 function uniq(arr){ return [...new Set(arr)]; }
 function normalizeGenres(s){ return s.split(',').map(g=>g.trim()).filter(Boolean); }
 function collectGenres(all){ return uniq(all.flatMap(x=>x.genres||[])).sort((a,b)=>a.localeCompare(b)); }
@@ -275,10 +243,7 @@ function renderList(arr){
     </div>`;
   }).join('') || `<div class="muted">No items yet. Add something on the right →</div>`;
 }
-
-
-function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[c])); }
-
+function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 /* ==== recommendations ======================================================== */
 function topN(arr, n){ return arr.slice(0, n); }
 function frequencyMap(arr){ const m=new Map(); arr.forEach(x=>m.set(x,(m.get(x)||0)+1)); return m; }
@@ -317,7 +282,6 @@ function renderRecommendations(){
     </div>`;
   }).join('') || `<div class="muted">Add a few items to see picks.</div>`;
 }
-
 /* ==== import/export ========================================================== */
 $('btn-export').addEventListener('click', async ()=>{
   const data = await getAll();
@@ -358,7 +322,6 @@ $('btn-clear').addEventListener('click', async ()=>{
   applyFilters();
   renderRecommendations();
 });
-
 /* ==== add/edit/delete/toggle ================================================= */
 $('btn-add').addEventListener('click', async ()=>{
   const title = $('in-title').value.trim();
@@ -378,7 +341,7 @@ $('btn-add').addEventListener('click', async ()=>{
   items = await getAll();
   clearAddForm();
   $('addMsg').textContent = 'Added ✔';
-  setTimeout(()=>{$('addMsg').textContent='';}, 1500);
+  setTimeout(()=>$('addMsg').textContent='', 1500);
   updateGenreFilterOptions();
   applyFilters();
   renderRecommendations();
@@ -390,7 +353,6 @@ function clearAddForm(){
 }
 function numOrNull(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
 function blankToNull(v){ const s=v.trim(); return s? s : null; }
-
 listEl.addEventListener('click', async (e)=>{
   const btn = e.target.closest('button');
   const chip = e.target.closest('[data-chip-genre]');
@@ -407,8 +369,11 @@ listEl.addEventListener('click', async (e)=>{
     item.watched = !item.watched;
     await updateItem(item);
   } else if (btn.dataset.delete){
-    openConfirm(id, item.title);
-    return; // wait for modal confirm
+    if(!confirm(`Delete "${item.title}"?`)) return;
+    // delete by replacing store contents minus this id
+    const rest = items.filter(x=>x.id!==id);
+    await deleteAll();
+    for (const r of rest) await addItem({ ...r, id: undefined }); // new ids
   } else if (btn.dataset.edit){
     const title = prompt('Title', item.title) ?? item.title;
     const year = prompt('Year', item.year ?? '') ?? item.year;
@@ -431,43 +396,13 @@ listEl.addEventListener('click', async (e)=>{
   applyFilters();
   renderRecommendations();
 });
-
-/* ==== confirm modal logic =================================================== */
-let pendingDeleteId = null;
-function openConfirm(id, title){
-  pendingDeleteId = id;
-  $('confirmTitle').textContent = `Delete "${title}"?`;
-  $('confirmBody').textContent = 'This action cannot be undone.';
-  $('confirmBackdrop').classList.add('show');
-  $('confirmCancel').focus();
-}
-function closeConfirm(){
-  pendingDeleteId = null;
-  $('confirmBackdrop').classList.remove('show');
-}
-$('confirmCancel').addEventListener('click', closeConfirm);
-$('confirmBackdrop').addEventListener('click', (e)=>{
-  if (e.target.id === 'confirmBackdrop') closeConfirm();
-});
-$('confirmDelete').addEventListener('click', async ()=>{
-  if (pendingDeleteId == null) return;
-  await deleteItem(pendingDeleteId);
-  items = items.filter(x => x.id !== pendingDeleteId);
-  updateGenreFilterOptions();
-  applyFilters();
-  renderRecommendations();
-  closeConfirm();
-});
-
 /* ==== filters & recommendations bindings ==================================== */
 ['q','f-director','f-genre','f-unwatched','f-minimdb','sort'].forEach(id=>{
-  const el = document.getElementById(id);
-  el && el.addEventListener('input', applyFilters);
+  $(id).addEventListener('input', applyFilters);
 });
 $('btn-reco').addEventListener('click', renderRecommendations);
 $('reco-scope').addEventListener('change', renderRecommendations);
 $('reco-size').addEventListener('change', renderRecommendations);
-
 /* ==== boot ================================================================== */
 (async function boot(){
   await openDB();
@@ -477,7 +412,6 @@ $('reco-size').addEventListener('change', renderRecommendations);
   renderRecommendations();
   registerSW();
 })();
-
 /* ==== service worker ========================================================= */
 function registerSW(){
   if (!('serviceWorker' in navigator)) { syncState.textContent='no SW'; return; }
@@ -486,16 +420,13 @@ function registerSW(){
     .catch(()=>{ syncState.textContent='SW failed'; });
 }
 </script>
-
 <script>
 // === TMDb & OMDb integration (auto-fill) ===
 const TMDB_KEY = (window.APP_KEYS && window.APP_KEYS.TMDB) || '';
 const OMDB_KEY = (window.APP_KEYS && window.APP_KEYS.OMDB) || '';
 const TMDB_API = 'https://api.themoviedb.org/3';
 const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
-
 if (!TMDB_KEY) console.warn('TMDb API key missing. Add it in /watchlist/env.js');
-
 async function tmdbSearch(query) {
   const url = `${TMDB_API}/search/multi?api_key=${encodeURIComponent(TMDB_KEY)}&query=${encodeURIComponent(query)}&include_adult=false`;
   const r = await fetch(url);
@@ -503,14 +434,12 @@ async function tmdbSearch(query) {
   const data = await r.json();
   return (data.results || []).filter(x => x.media_type === 'movie' || x.media_type === 'tv').slice(0, 10);
 }
-
 async function tmdbDetails(kind, id) {
   const url = `${TMDB_API}/${kind}/${id}?api_key=${encodeURIComponent(TMDB_KEY)}&append_to_response=credits,external_ids`;
   const r = await fetch(url);
   if (!r.ok) throw new Error('TMDb details failed');
   return r.json();
 }
-
 async function fetchImdbRating(imdbId) {
   if (!imdbId || !OMDB_KEY) return null;
   const url = `https://www.omdbapi.com/?apikey=${encodeURIComponent(OMDB_KEY)}&i=${encodeURIComponent(imdbId)}`;
@@ -520,7 +449,6 @@ async function fetchImdbRating(imdbId) {
   const val = parseFloat(data.imdbRating);
   return isNaN(val) ? null : val;
 }
-
 $('btn-tmdb-search').addEventListener('click', async () => {
   const q = $('tmdb-query').value.trim();
   if (!q) return;
@@ -551,7 +479,6 @@ $('btn-tmdb-search').addEventListener('click', async () => {
     container.innerHTML = '<div class="muted">Search failed.</div>';
   }
 });
-
 $('tmdb-results').addEventListener('click', async (e) => {
   const btn = e.target.closest('button[data-import]');
   if (!btn) return;
@@ -572,7 +499,6 @@ $('tmdb-results').addEventListener('click', async (e) => {
     const posterUrl = d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null;
     const imdbId = d.external_ids?.imdb_id || null;
     const imdb = (await fetchImdbRating(imdbId)) ?? (typeof d.vote_average === 'number' ? Math.round(d.vote_average * 10)/10 : null);
-
     const item = {
       type: kind === 'tv' ? 'show' : 'movie',
       title: d.title || d.name,
@@ -585,31 +511,19 @@ $('tmdb-results').addEventListener('click', async (e) => {
       watched: false,
       addedAt: Date.now()
     };
-
     await addItem(item);
     items = await getAll();
     updateGenreFilterOptions();
     applyFilters();
     renderRecommendations();
     $('addMsg').textContent = 'Added from TMDb ✔';
-    setTimeout(()=>{$('addMsg').textContent='';}, 1500);
+    setTimeout(()=>$('addMsg').textContent='', 1500);
   } catch (err) {
     alert('Import failed: ' + err.message);
   }
 });
 </script>
-
-<!-- Confirm modal markup -->
-<div id="confirmBackdrop" class="modal-backdrop" aria-hidden="true">
-  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
-    <h4 id="confirmTitle">Delete item?</h4>
-    <div id="confirmBody" class="muted">This action cannot be undone.</div>
-    <div class="row">
-      <button id="confirmCancel" class="ghost">Cancel</button>
-      <button id="confirmDelete" class="danger">Delete</button>
-    </div>
-  </div>
-</div>
-
 </body>
 </html>
+
+

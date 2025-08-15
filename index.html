@@ -96,6 +96,7 @@
   <aside class="grid" style="gap:12px;">
     <section class="card">
       <h3 style="margin-top:0;">Add Title</h3>
+      
       <div class="row row-2">
         <input id="in-title" placeholder="Title *" />
         <select id="in-type">
@@ -115,6 +116,14 @@
         <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
       </div>
       <div class="kicker" id="addMsg" aria-live="polite"></div>
+      
+      <div class="sep" style="margin-top:12px;"></div>
+      <div class="sub">Search online to auto-fill (TMDb). IMDb rating via OMDb if key is set.</div>
+      <div class="row row-2">
+        <input id="tmdb-query" placeholder="Type a movie/show name…" />
+        <button id="btn-tmdb-search">Search TMDb</button>
+      </div>
+      <div id="tmdb-results" class="list" style="margin-top:8px;"></div>
     </section>
 
     <section class="card">
@@ -137,6 +146,7 @@
   </aside>
 </main>
 
+<script src="/watchlist/env.js"></script>
 <script>
 /* ==== tiny IndexedDB wrapper ================================================= */
 const dbName = 'watchlist-db-v1';
@@ -207,25 +217,30 @@ function applyFilters(){
   });
   renderList(out);
 }
+    
 function renderList(arr){
   listEl.innerHTML = arr.map(it=>{
     const tags = (it.genres||[]).map(g=>`<button class="tag" data-chip-genre="${g}" title="Filter by ${g}">${g}</button>`).join('');
     const pill = `<span class="pill ${it.type==='show'?'show':'movie'}">${it.type}</span>`;
     const imdb = (it.imdb ?? '').toString();
     const titleCls = it.watched ? 'strike' : '';
-    const notes = it.notes ? `<div class="muted" style="margin-top:4px;">${escapeHTML(it.notes)}</div>` : '';
+    const notes = it.notes ? `<div class="muted" style="margin-top:4px; white-space:pre-wrap;">${escapeHTML(it.notes)}</div>` : '';
+    const poster = it.posterUrl ? `<img src="${it.posterUrl}" alt="" style="width:64px;height:auto;border-radius:8px;object-fit:cover;">` : '';
     return `
     <div class="item" data-id="${it.id}">
-      <div>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          ${pill}
-          <strong class="${titleCls}">${escapeHTML(it.title)}</strong>
-          ${it.year ? `<small>(${it.year})</small>`:''}
-          ${imdb ? `<small>IMDb: ${imdb}</small>`:''}
-          ${it.director ? `<small>• Dir: ${escapeHTML(it.director)}</small>`:''}
+      <div style="display:flex; gap:12px; align-items:flex-start;">
+        ${poster}
+        <div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            ${pill}
+            <strong class="${titleCls}">${escapeHTML(it.title)}</strong>
+            ${it.year ? `<small>(${it.year})</small>`:''}
+            ${imdb ? `<small>IMDb: ${imdb}</small>`:''}
+            ${it.director ? `<small>• Dir: ${escapeHTML(it.director)}</small>`:''}
+          </div>
+          <div class="tags" style="margin-top:6px;">${tags}</div>
+          ${notes}
         </div>
-        <div class="tags" style="margin-top:6px;">${tags}</div>
-        ${notes}
       </div>
       <div class="right">
         <button data-toggle="${it.id}">${it.watched ? 'Unwatch' : 'Watched'}</button>
@@ -235,6 +250,7 @@ function renderList(arr){
     </div>`;
   }).join('') || `<div class="muted">No items yet. Add something on the right →</div>`;
 }
+
 
 function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
 
@@ -420,5 +436,118 @@ function registerSW(){
     .catch(()=>{ syncState.textContent='SW failed'; });
 }
 </script>
+
+<script>
+// === TMDb & OMDb integration (auto-fill) ===
+const TMDB_KEY = (window.APP_KEYS && window.APP_KEYS.TMDB) || '';
+const OMDB_KEY = (window.APP_KEYS && window.APP_KEYS.OMDB) || '';
+const TMDB_API = 'https://api.themoviedb.org/3';
+const TMDB_IMG = 'https://image.tmdb.org/t/p/w342';
+
+if (!TMDB_KEY) console.warn('TMDb API key missing. Add it in /watchlist/env.js');
+
+async function tmdbSearch(query) {
+  const url = `${TMDB_API}/search/multi?api_key=${encodeURIComponent(TMDB_KEY)}&query=${encodeURIComponent(query)}&include_adult=false`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('TMDb search failed');
+  const data = await r.json();
+  return (data.results || []).filter(x => x.media_type === 'movie' || x.media_type === 'tv').slice(0, 10);
+}
+
+async function tmdbDetails(kind, id) {
+  const url = `${TMDB_API}/${kind}/${id}?api_key=${encodeURIComponent(TMDB_KEY)}&append_to_response=credits,external_ids`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('TMDb details failed');
+  return r.json();
+}
+
+async function fetchImdbRating(imdbId) {
+  if (!imdbId || !OMDB_KEY) return null;
+  const url = `https://www.omdbapi.com/?apikey=${encodeURIComponent(OMDB_KEY)}&i=${encodeURIComponent(imdbId)}`;
+  const r = await fetch(url);
+  if (!r.ok) return null;
+  const data = await r.json();
+  const val = parseFloat(data.imdbRating);
+  return isNaN(val) ? null : val;
+}
+
+$('btn-tmdb-search').addEventListener('click', async () => {
+  const q = $('tmdb-query').value.trim();
+  if (!q) return;
+  const container = $('tmdb-results');
+  container.innerHTML = '<div class="muted">Searching…</div>';
+  try {
+    const results = await tmdbSearch(q);
+    if (!results.length) { container.innerHTML = '<div class="muted">No results.</div>'; return; }
+    container.innerHTML = results.map(r => {
+      const title = r.title || r.name;
+      const year = (r.release_date || r.first_air_date || '').slice(0,4);
+      const poster = r.poster_path ? `${TMDB_IMG}${r.poster_path}` : '';
+      return `
+        <div class="item">
+          <div style="display:flex; gap:10px; align-items:flex-start;">
+            ${poster ? `<img src="${poster}" alt="" style="width:48px; border-radius:8px;">` : ''}
+            <div>
+              <strong>${escapeHTML(title)}</strong> ${year?`<small>(${year})</small>`:''}
+              <div class="muted">${r.media_type.toUpperCase()}</div>
+            </div>
+          </div>
+          <div class="right">
+            <button data-import="${r.media_type}:${r.id}">Add</button>
+          </div>
+        </div>`;
+    }).join('');
+  } catch {
+    container.innerHTML = '<div class="muted">Search failed.</div>';
+  }
+});
+
+$('tmdb-results').addEventListener('click', async (e) => {
+  const btn = e.target.closest('button[data-import]');
+  if (!btn) return;
+  const [kind, idStr] = btn.dataset.import.split(':');
+  const id = parseInt(idStr,10);
+  try {
+    const d = await tmdbDetails(kind, id);
+    // director / creators
+    let director = null;
+    if (kind === 'movie' && d.credits && d.credits.crew) {
+      const dir = d.credits.crew.find(p => p.job === 'Director');
+      director = dir ? dir.name : null;
+    } else if (kind === 'tv' && Array.isArray(d.created_by) && d.created_by.length) {
+      director = d.created_by.map(x => x.name).join(', ');
+    }
+    const cast = (d.credits?.cast || []).slice(0,5).map(p => p.name).join(', ');
+    const production = (d.production_companies || []).map(p => p.name);
+    const posterUrl = d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null;
+    const imdbId = d.external_ids?.imdb_id || null;
+    const imdb = (await fetchImdbRating(imdbId)) ?? (typeof d.vote_average === 'number' ? Math.round(d.vote_average * 10)/10 : null);
+
+    const item = {
+      type: kind === 'tv' ? 'show' : 'movie',
+      title: d.title || d.name,
+      year: parseInt((d.release_date || d.first_air_date || '').slice(0,4),10) || null,
+      director,
+      imdb,
+      genres: (d.genres || []).map(g => g.name),
+      notes: `Cast: ${cast}${production.length ? `\nProd: ${production.join(', ')}`:''}`,
+      posterUrl,
+      watched: false,
+      addedAt: Date.now()
+    };
+
+    await addItem(item);
+    items = await getAll();
+    updateGenreFilterOptions();
+    applyFilters();
+    renderRecommendations();
+    $('addMsg').textContent = 'Added from TMDb ✔';
+    setTimeout(()=>$('addMsg').textContent='', 1500);
+  } catch (err) {
+    alert('Import failed: ' + err.message);
+  }
+});
+</script>
+
 </body>
 </html>

@@ -33,7 +33,11 @@ self.addEventListener('fetch', (e) => {
       return fetch(request).then(resp => {
         // Cache same-origin GETs under our scope
         const url = new URL(request.url);
-        if (url.origin === self.location.origin && url.pathname.startsWith(`${BASE}/`)) {
+          
+        if (
+            (url.origin === self.location.origin && url.pathname.startsWith(`${BASE}/`)) ||
+            (url.hostname === 'image.tmdb.org')
+            ) {
           const copy = resp.clone();
           caches.open(CACHE).then(c => c.put(request, copy));
         }

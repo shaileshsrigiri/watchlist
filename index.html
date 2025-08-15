@@ -30,9 +30,11 @@
     .btn-warn { background:#7c2d12; border-color:#6b1d10; }
     .tags { display:flex; gap:6px; flex-wrap:wrap; }
     .tag { background:#0b1226; border:1px solid #1f2937; padding:2px 8px; border-radius:999px; font-size:12px; color:#a5b4fc; }
-    .list { display:grid; gap:10px; margin-top:10px; }
-    .item { display:grid; gap:8px; grid-template-columns: 1fr auto; align-items:center; background:#0b1226; border:1px solid #1f2937; border-radius:12px; padding:12px; }
-    .item small { color:var(--muted); }
+    .list { display:grid; gap:12px; margin-top:10px; }
+    /* roomier items */
+    .item { display:grid; gap:12px; grid-template-columns: 1fr auto; align-items:center; background:#0b1226; border:1px solid #1f2937; border-radius:12px; padding:14px; }
+    .item strong { font-size:16px; }
+    .item small { color:var(--muted); font-size:12px; }
     .pill { font-size:12px; padding:2px 8px; border-radius:999px; border:1px solid #1f2937; }
     .pill.movie { color:#fca5a5; }
     .pill.show { color:#93c5fd; }
@@ -44,6 +46,19 @@
     .strike { text-decoration: line-through; color:#6b7280; }
     .kicker { font-size:12px; color:#a7f3d0; }
     .footer { color:#64748b; font-size:12px; margin-top:8px; text-align:center; }
+
+    /* Collapsible cards */
+    details > summary { cursor:pointer; list-style:none; }
+
+    /* Confirm modal */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 50; }
+    .modal { background: #111827; border: 1px solid #1f2937; border-radius: 16px; padding: 16px; width: 90%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,.45); }
+    .modal h4 { margin: 0 0 8px; }
+    .modal .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+    .modal button { padding: 10px 12px; border-radius: 10px; border: 1px solid #1f2937; }
+    .modal .danger { background:#7c2d12; border-color:#6b1d10; }
+    .modal .ghost { background: transparent; }
+    .show { display: flex; }
   </style>
 </head>
 <body>
@@ -67,27 +82,33 @@
 <main class="wrap grid grid-2" style="margin-top:12px;">
   <!-- Left: List & Filters -->
   <section class="card">
-    <h2 style="margin:0 0 8px;">Your List</h2>
-    <div class="row row-3">
-      <input id="q" placeholder="Search title…" />
-      <input id="f-director" placeholder="Filter by director…" />
-      <select id="f-genre" title="Genre filter">
-        <option value="">All genres</option>
-      </select>
-    </div>
-    <div class="row row-3" style="margin-top:8px;">
-      <label><input id="f-unwatched" type="checkbox" /> Unwatched only</label>
-      <input id="f-minimdb" type="number" min="0" max="10" step="0.1" placeholder="Min IMDb (e.g., 7.5)" />
-      <select id="sort">
-        <option value="imdb-desc">Sort: IMDb ⬇︎</option>
-        <option value="imdb-asc">Sort: IMDb ⬆︎</option>
-        <option value="title-asc">Sort: Title A–Z</option>
-        <option value="year-desc">Sort: Year ⬇︎</option>
-        <option value="year-asc">Sort: Year ⬆︎</option>
-        <option value="added-desc">Sort: Recently Added</option>
-      </select>
-    </div>
-    <div class="list" id="list"></div>
+    <h2 style="margin:0 0 8px;">Your Library</h2>
+
+    <!-- Collapsible filters -->
+    <details id="filters" style="background:#0b1226;border:1px solid #1f2937;border-radius:12px;padding:10px;">
+      <summary><span>Filters & Sort</span> <span class="muted" style="font-size:12px;">(click to toggle)</span></summary>
+      <div class="row row-3" style="margin-top:10px;">
+        <input id="q" placeholder="Search title…" />
+        <input id="f-director" placeholder="Filter by director…" />
+        <select id="f-genre" title="Genre filter">
+          <option value="">All genres</option>
+        </select>
+      </div>
+      <div class="row row-3" style="margin-top:8px;">
+        <label><input id="f-unwatched" type="checkbox" /> Unwatched only</label>
+        <input id="f-minimdb" type="number" min="0" max="10" step="0.1" placeholder="Min IMDb (e.g., 7.5)" />
+        <select id="sort">
+          <option value="imdb-desc">Sort: IMDb ⬇︎</option>
+          <option value="imdb-asc">Sort: IMDb ⬆︎</option>
+          <option value="title-asc">Sort: Title A–Z</option>
+          <option value="year-desc">Sort: Year ⬇︎</option>
+          <option value="year-asc">Sort: Year ⬆︎</option>
+          <option value="added-desc">Sort: Recently Added</option>
+        </select>
+      </div>
+    </details>
+
+    <div class="list" id="list" style="margin-top:12px;"></div>
     <div class="sep"></div>
     <div class="footer">Tip: Click a genre chip to quick-filter. Toggle “watched” in the item menu.</div>
   </section>
@@ -95,53 +116,56 @@
   <!-- Right: Add & Recommendations -->
   <aside class="grid" style="gap:12px;">
     <section class="card">
-      <h3 style="margin-top:0;">Add Title</h3>
-      
-      <div class="row row-2">
-        <input id="in-title" placeholder="Title *" />
-        <select id="in-type">
-          <option value="movie">Movie</option>
-          <option value="show">Show</option>
-        </select>
-      </div>
-      <div class="row row-3" style="margin-top:8px;">
-        <input id="in-year" type="number" placeholder="Year" />
-        <input id="in-director" placeholder="Director(s)" />
-        <input id="in-imdb" type="number" step="0.1" min="0" max="10" placeholder="IMDb (0–10)" />
-      </div>
-      <input id="in-genres" placeholder="Genres (comma separated, e.g., Drama, Sci-Fi)" style="margin-top:8px;" />
-      <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="margin-top:8px;"></textarea>
-      <div class="toolbar" style="margin-top:8px;">
-        <button id="btn-add" class="btn-ok">Add</button>
-        <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
-      </div>
-      <div class="kicker" id="addMsg" aria-live="polite"></div>
-      
-      <div class="sep" style="margin-top:12px;"></div>
-      <div class="sub">Search online to auto-fill (TMDb). IMDb rating via OMDb if key is set.</div>
-      <div class="row row-2">
-        <input id="tmdb-query" placeholder="Type a movie/show name…" />
-        <button id="btn-tmdb-search">Search TMDb</button>
-      </div>
-      <div id="tmdb-results" class="list" style="margin-top:8px;"></div>
+      <details open>
+        <summary><h3 style="margin:0;">Add Title</h3></summary>
+        <div class="row row-2">
+          <input id="in-title" placeholder="Title *" />
+          <select id="in-type">
+            <option value="movie">Movie</option>
+            <option value="show">Show</option>
+          </select>
+        </div>
+        <div class="row row-3" style="margin-top:8px;">
+          <input id="in-year" type="number" placeholder="Year" />
+          <input id="in-director" placeholder="Director(s)" />
+          <input id="in-imdb" type="number" step="0.1" min="0" max="10" placeholder="IMDb (0–10)" />
+        </div>
+        <input id="in-genres" placeholder="Genres (comma separated, e.g., Drama, Sci-Fi)" style="margin-top:8px;" />
+        <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="margin-top:8px;"></textarea>
+        <div class="toolbar" style="margin-top:8px;">
+          <button id="btn-add" class="btn-ok">Add</button>
+          <label><input id="in-watched" type="checkbox" /> Mark as watched</label>
+        </div>
+        <div class="kicker" id="addMsg" aria-live="polite"></div>
+
+        <div class="sep" style="margin-top:12px;"></div>
+        <div class="sub">Search online to auto-fill (TMDb). IMDb rating via OMDb if key is set.</div>
+        <div class="row row-2">
+          <input id="tmdb-query" placeholder="Type a movie/show name…" />
+          <button id="btn-tmdb-search">Search TMDb</button>
+        </div>
+        <div id="tmdb-results" class="list" style="margin-top:8px;"></div>
+      </details>
     </section>
 
     <section class="card">
-      <h3 style="margin-top:0;">Recommendations</h3>
-      <div class="sub">Picks are based on your most frequent genres/directors among items you liked (IMDb ≥ 7) or already added.</div>
-      <div class="toolbar">
-        <button id="btn-reco">Refresh Picks</button>
-        <select id="reco-scope">
-          <option value="unwatched">Unwatched only</option>
-          <option value="all">All items</option>
-        </select>
-        <select id="reco-size">
-          <option value="5">Top 5</option>
-          <option value="10">Top 10</option>
-          <option value="15">Top 15</option>
-        </select>
-      </div>
-      <div id="reco" class="list"></div>
+      <details>
+        <summary><h3 style="margin:0;">Recommendations</h3></summary>
+        <div class="sub">Picks are based on your most frequent genres/directors among items you liked (IMDb ≥ 7) or already added.</div>
+        <div class="toolbar">
+          <button id="btn-reco">Refresh Picks</button>
+          <select id="reco-scope">
+            <option value="unwatched">Unwatched only</option>
+            <option value="all">All items</option>
+          </select>
+          <select id="reco-size">
+            <option value="5">Top 5</option>
+            <option value="10">Top 10</option>
+            <option value="15">Top 15</option>
+          </select>
+        </div>
+        <div id="reco" class="list"></div>
+      </details>
     </section>
   </aside>
 </main>
@@ -170,6 +194,7 @@ function openDB() {
 function tx(mode='readonly') { return db.transaction(storeName, mode).objectStore(storeName); }
 function addItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').add(item); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 function updateItem(item){ return new Promise((res,rej)=>{ const r=tx('readwrite').put(item); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
+function deleteItem(id){ return new Promise((res,rej)=>{ const r=tx('readwrite').delete(id); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function deleteAll(){ return new Promise((res,rej)=>{ const r=tx('readwrite').clear(); r.onsuccess=()=>res(); r.onerror=()=>rej(r.error); }); }
 function getAll(){ return new Promise((res,rej)=>{ const r=tx().getAll(); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
 
@@ -252,7 +277,7 @@ function renderList(arr){
 }
 
 
-function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c])); }
+function escapeHTML(s){ return (s??'').replace(/[&<>"']/g, c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;' }[c])); }
 
 /* ==== recommendations ======================================================== */
 function topN(arr, n){ return arr.slice(0, n); }
@@ -353,7 +378,7 @@ $('btn-add').addEventListener('click', async ()=>{
   items = await getAll();
   clearAddForm();
   $('addMsg').textContent = 'Added ✔';
-  setTimeout(()=>$('addMsg').textContent='', 1500);
+  setTimeout(()=>{$('addMsg').textContent='';}, 1500);
   updateGenreFilterOptions();
   applyFilters();
   renderRecommendations();
@@ -382,11 +407,8 @@ listEl.addEventListener('click', async (e)=>{
     item.watched = !item.watched;
     await updateItem(item);
   } else if (btn.dataset.delete){
-    if(!confirm(`Delete "${item.title}"?`)) return;
-    // delete by replacing store contents minus this id
-    const rest = items.filter(x=>x.id!==id);
-    await deleteAll();
-    for (const r of rest) await addItem({ ...r, id: undefined }); // new ids
+    openConfirm(id, item.title);
+    return; // wait for modal confirm
   } else if (btn.dataset.edit){
     const title = prompt('Title', item.title) ?? item.title;
     const year = prompt('Year', item.year ?? '') ?? item.year;
@@ -410,9 +432,37 @@ listEl.addEventListener('click', async (e)=>{
   renderRecommendations();
 });
 
+/* ==== confirm modal logic =================================================== */
+let pendingDeleteId = null;
+function openConfirm(id, title){
+  pendingDeleteId = id;
+  $('confirmTitle').textContent = `Delete "${title}"?`;
+  $('confirmBody').textContent = 'This action cannot be undone.';
+  $('confirmBackdrop').classList.add('show');
+  $('confirmCancel').focus();
+}
+function closeConfirm(){
+  pendingDeleteId = null;
+  $('confirmBackdrop').classList.remove('show');
+}
+$('confirmCancel').addEventListener('click', closeConfirm);
+$('confirmBackdrop').addEventListener('click', (e)=>{
+  if (e.target.id === 'confirmBackdrop') closeConfirm();
+});
+$('confirmDelete').addEventListener('click', async ()=>{
+  if (pendingDeleteId == null) return;
+  await deleteItem(pendingDeleteId);
+  items = items.filter(x => x.id !== pendingDeleteId);
+  updateGenreFilterOptions();
+  applyFilters();
+  renderRecommendations();
+  closeConfirm();
+});
+
 /* ==== filters & recommendations bindings ==================================== */
 ['q','f-director','f-genre','f-unwatched','f-minimdb','sort'].forEach(id=>{
-  $(id).addEventListener('input', applyFilters);
+  const el = document.getElementById(id);
+  el && el.addEventListener('input', applyFilters);
 });
 $('btn-reco').addEventListener('click', renderRecommendations);
 $('reco-scope').addEventListener('change', renderRecommendations);
@@ -542,12 +592,24 @@ $('tmdb-results').addEventListener('click', async (e) => {
     applyFilters();
     renderRecommendations();
     $('addMsg').textContent = 'Added from TMDb ✔';
-    setTimeout(()=>$('addMsg').textContent='', 1500);
+    setTimeout(()=>{$('addMsg').textContent='';}, 1500);
   } catch (err) {
     alert('Import failed: ' + err.message);
   }
 });
 </script>
+
+<!-- Confirm modal markup -->
+<div id="confirmBackdrop" class="modal-backdrop" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <h4 id="confirmTitle">Delete item?</h4>
+    <div id="confirmBody" class="muted">This action cannot be undone.</div>
+    <div class="row">
+      <button id="confirmCancel" class="ghost">Cancel</button>
+      <button id="confirmDelete" class="danger">Delete</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

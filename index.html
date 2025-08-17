@@ -74,11 +74,38 @@
     @media (max-width:900px){ :root{--heroH:300px} }
     @media (max-width:720px){ :root{--heroH:240px} .hero{flex-direction:column;align-items:center} .facts{grid-template-columns:1fr} }
 
-    /* Reco drawer */
-    .reco-drawer{position:fixed;top:120px;right:16px;width:340px;max-width:95vw;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.45);padding:12px;display:none;z-index:15;max-height:calc(100vh - 140px);overflow:auto}
-    .reco-drawer.open{display:block}
-    .reco-item{display:flex;gap:10px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#0f1428;align-items:center}
-    .reco-poster{width:48px;height:72px;background:#101a34;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#5b6c94;font-size:12px}
+    /* Reco drawer: isolate so outside rules can't leak in */
+    .reco-drawer{
+      position:fixed;
+      top:120px; right:100px; width:430px; max-width:95vw;
+      background:var(--panel); border:1px solid var(--line); border-radius:16px;
+      box-shadow:0 20px 50px rgba(0,0,0,.45);
+      padding:12px; display:none; z-index:40;       /* <- higher & isolated */
+      max-height:calc(100vh - 140px); overflow:auto;
+      isolation:isolate;                             /* <- key line */
+    }
+
+    .reco-drawer.open{ display:block; }
+
+    .reco-item{
+      display:flex; gap:10px; align-items:center;
+      border:1px solid var(--line); border-radius:12px;
+      padding:10px; background:#0f1428;
+    }
+
+    /* Clamp poster strictly and force cover behaviour */
+    .reco-poster{
+      flex:0 0 56px; width:56px; height:84px;
+      border-radius:8px; overflow:hidden; background:#101a34;
+    }
+    .reco-poster img{
+      display:block !important;
+      width:100% !important;
+      height:100% !important;
+      object-fit:cover !important;
+      position:static !important; /* guard against any absolute rules elsewhere */
+    }
+
 
     /* FAB + Modal (Add) */
     .fab{position:fixed;right:24px;bottom:24px;background:var(--accent);color:#06121f;border-color:#274c7a;padding:14px 16px;border-radius:14px;font-weight:600;z-index:16}
@@ -542,22 +569,46 @@ function computeRecs(scope='unwatched'){
   if(scope==='unwatched') pool = pool.filter(x=>!x.watched);
   return pool.sort((a,b)=>score(b)-score(a)).slice(0,8);
 }
-function renderRecs(){
-  const scope = $('#recoScope').value;
-  const recs = computeRecs(scope);
-  $('#recoList').innerHTML = recs.map(it=>`
-    <div class="reco-item">
-      <div class="reco-poster">
-        ${posterImgHTML(it,'reco') || 'Img'}
-      </div>
-      <div>
-        <strong>${escapeHTML(it.title)}</strong>
-        <div class="muted">${it.type==='show'?'Show':'Movie'} • ${it.year??'—'} • ${it.imdb!=null?`IMDb ${it.imdb}`:'No rating'}</div>
-      </div>
-      <div style="margin-left:auto"><button class="btn-ghost" onclick="location.hash='#d-${it.id}'">Open</button></div>
-    </div>
-  `).join('') || `<div class="muted">Add a few items to see picks.</div>`;
-}
+    function renderRecs(){
+      const scope = document.getElementById('recoScope').value;
+      const recs = computeRecs(scope);
+
+      const html = recs.map(it=>{
+        // Prefer a smaller TMDb variant for the drawer
+        let thumb = '';
+        if (it.posterUrl) {
+          const u = new URL(it.posterUrl, location.href);
+          // if TMDb, force w185 for thumbs
+          if (u.hostname === 'image.tmdb.org') {
+            const parts = u.pathname.split('/');
+            const i = parts.findIndex(s => /^w\d+$/.test(s));
+            if (i >= 0) parts[i] = 'w185';
+            u.pathname = parts.join('/');
+          }
+          thumb = `<img src="${u.toString()}" loading="lazy" decoding="async" alt="">`;
+        }
+
+        return `
+          <div class="reco-item">
+            <div class="reco-poster">${thumb || ''}</div>
+            <div style="min-width:0">
+              <strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${escapeHTML(it.title)}
+              </strong>
+              <div class="muted">
+                ${(it.type==='show'?'Show':'Movie')} • ${it.year ?? '—'}
+                ${it.imdb!=null ? ` • IMDb ${it.imdb}` : ''}
+              </div>
+            </div>
+            <div style="margin-left:auto">
+              <button class="btn-ghost" onclick="location.hash='#d-${it.id}'">Open</button>
+            </div>
+          </div>`;
+      }).join('') || `<div class="muted">Add a few items to see picks.</div>`;
+
+      document.getElementById('recoList').innerHTML = html;
+    }
+
 $('#btnReco').onclick=()=>{ $('#reco').classList.toggle('open'); renderRecs(); };
 $('#recoScope').onchange=renderRecs;
 

@@ -5,7 +5,6 @@
   <title>Watchlist — Card Grid</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#0b1020" />
-  <!-- PWA assets: use relative paths so it works on GitHub Pages project sites -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <style>
@@ -49,14 +48,11 @@
       margin:8px 12px 0;
       padding:6px 10px;
       border:1px solid var(--line);
-      background:#0b1226;            /* same family as inputs */
+      background:#0b1226;
       border-radius:10px;
       font-weight:700;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
     }
-    .caption .title{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
     .meta{padding:10px 12px}
     .meta-row{display:flex;align-items:center;gap:8px}
     .pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
@@ -86,23 +82,23 @@
 
     /* FAB + Modal (Add) */
     .fab{position:fixed;right:24px;bottom:24px;background:var(--accent);color:#06121f;border-color:#274c7a;padding:14px 16px;border-radius:14px;font-weight:600;z-index:16}
+
     /* modal (Add sheet) */
     .overlay{
       position:fixed; inset:0;
       background:var(--overlay);
       display:none; align-items:flex-end; justify-content:center;
       z-index:30;
-      overscroll-behavior:contain; /* prevent background scroll chaining */
+      overscroll-behavior:contain;
     }
     .overlay.open{ display:flex; }
 
-    /* Make the sheet a flex column so the body can scroll */
     .sheet{
       width:100%; max-width:900px;
       background:var(--panel); border:1px solid var(--line);
       border-top-left-radius:16px; border-top-right-radius:16px;
       box-shadow:0 -10px 30px rgba(0,0,0,.5);
-      max-height:92vh;                 /* << limit height */
+      max-height:92vh;
       display:flex; flex-direction:column;
     }
     .sheet .head{
@@ -112,27 +108,22 @@
     }
     .tabs{
       display:flex; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line);
-      position:sticky; top:48px; z-index:2;  /* keeps tabs visible too */
-      background:var(--panel);
+      position:sticky; top:48px; z-index:2; background:var(--panel);
     }
     .tab{ padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:#0b1226; cursor:pointer }
     .tab.active{ background:#1e2a52 }
 
-    /* Scroll happens here */
     .sheet .body{
       padding:12px 16px;
-      overflow:auto;               /* << enable scrolling inside the modal */
+      overflow:auto;
       -webkit-overflow-scrolling:touch;
     }
-
-    /* Keep the TMDb search row pinned while results scroll */
     #tab-tmdb .row-2{
       position:sticky; top:0; z-index:1;
       background:var(--panel);
       padding-top:4px; padding-bottom:8px;
       border-bottom:1px solid var(--line);
     }
-
     .row-2{display:grid;grid-template-columns:1fr auto;gap:8px}
     .list-compact .item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0f1428}
   </style>
@@ -143,7 +134,6 @@
     <h1>🎬 Watchlist — Card Grid</h1>
     <div class="sub">Minimal cards (poster + title overlay). Click a card for details. Fully offline with Import/Export.</div>
 
-    <!-- TOOLBAR: omnibox + sort + toggles + actions -->
     <div class="toolbar">
       <input id="omni" placeholder='Search anything… e.g. nolan actor:"anne hathaway" genre:sci-fi year:>=2010 imdb:>=8 unwatched' />
       <select id="sortSel">
@@ -157,12 +147,9 @@
 
       <button id="btnReco">Recommendations</button>
       <button id="btn-export" title="Download JSON">Export</button>
-
-      <!-- Import styled like a normal button -->
       <label class="btn" id="btn-import">Import
         <input id="file-import" type="file" accept="application/json" hidden>
       </label>
-
       <button id="btn-clear" class="btn-ghost" title="Clear all items (confirm)">Clear</button>
     </div>
 
@@ -353,6 +340,13 @@ function renderActiveFiltersChips(q, forceUnwatched){
   $('#activeFilters').innerHTML = chips.join('');
 }
 
+let currentFilteredArray = [];
+/* virtualized grid settings */
+const VIRTUAL_THRESHOLD = 120;
+const BATCH = 40;
+let visibleCount = 0;
+let io = null;
+
 function applyFilters(){
   const q=parseOmni($('#omni').value);
   const forceUnwatched = $('#chkUnwatched').checked;
@@ -397,18 +391,45 @@ function applyFilters(){
     }
   });
 
+  currentFilteredArray = out;
   renderGrid(out);
   renderActiveFiltersChips(q, forceUnwatched);
+}
+
+/* ====================== Poster helpers (responsive + lazy) ================= */
+function posterImgHTML(it, slot='grid'){
+  // Prefer posterPath (TMDb); fallback to posterUrl
+  const p = it.posterPath;
+  if (p) {
+    // sizes tuned for grid (min card 220px), detail hero, or reco thumbs
+    const sizes = slot==='detail'
+      ? '(max-width: 720px) 80vw, 360px'
+      : slot==='reco'
+        ? '72px'
+        : '(max-width: 640px) 45vw, 220px';
+    const w185 = `https://image.tmdb.org/t/p/w185${p}`;
+    const w342 = `https://image.tmdb.org/t/p/w342${p}`;
+    const w500 = `https://image.tmdb.org/t/p/w500${p}`;
+    return `<img
+      src="${w342}"
+      srcset="${w185} 185w, ${w342} 342w, ${w500} 500w"
+      sizes="${sizes}"
+      loading="lazy" decoding="async" alt=""
+      onerror="this.remove()">`;
+  } else if (it.posterUrl) {
+    return `<img src="${escapeHTML(it.posterUrl)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">`;
+  }
+  return '';
 }
 
 /* ====================== Grid / Cards ====================== */
 function cardHTML(it){
   const chip = `<span class="pill ${it.type==='show'?'show':'movie'}">${it.type||'movie'}</span>`;
-  const poster = it.posterUrl ? `<img src="${escapeHTML(it.posterUrl)}" alt="">` : '';
+  const poster = posterImgHTML(it, 'grid') || '';
   const letter = `<span class="letter">${firstLetter(it.title)}</span>`;
   return `<div class="item" data-id="${it.id}">
     <div class="poster">${poster}${letter}</div>
-                <div class="titlebar" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
+    <div class="titlebar" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
     <div class="meta"><div class="meta-row">
       <span class="muted">${it.year??''}</span>
       ${it.imdb!=null?`<span class="rating">IMDb ${it.imdb}</span>`:''}
@@ -417,7 +438,36 @@ function cardHTML(it){
   </div>`;
 }
 
-function renderGrid(arr){ list.innerHTML = arr.map(cardHTML).join('') || `<div class="muted">No items yet. Click “＋ Add”.</div>`; }
+function renderGrid(arr){
+  // small lists → normal render; big lists → virtualized
+  if (io) { io.disconnect(); io = null; }
+  const sentinel = document.getElementById('sentinel');
+  if (sentinel) sentinel.remove();
+
+  if (arr.length <= VIRTUAL_THRESHOLD) {
+    list.innerHTML = arr.map(cardHTML).join('') || `<div class="muted">No items yet. Click “＋ Add”.</div>`;
+    return;
+  }
+
+  // virtual start
+  visibleCount = Math.min(60, arr.length);
+  list.innerHTML = arr.slice(0, visibleCount).map(cardHTML).join('');
+  let s = document.createElement('div');
+  s.id = 'sentinel';
+  s.style.height = '1px';
+  list.after(s);
+
+  io = new IntersectionObserver((entries)=>{
+    if (!entries.some(e=>e.isIntersecting)) return;
+    const prev = visibleCount;
+    visibleCount = Math.min(visibleCount + BATCH, currentFilteredArray.length);
+    if (visibleCount > prev) {
+      list.insertAdjacentHTML('beforeend', currentFilteredArray.slice(prev, visibleCount).map(cardHTML).join(''));
+    }
+    if (visibleCount >= currentFilteredArray.length) { io.disconnect(); }
+  });
+  io.observe(s);
+}
 
 /* ====================== Routing / Detail ====================== */
 function showGrid(){ $('#view-grid').style.display='grid'; $('#view-detail').classList.remove('show'); }
@@ -435,7 +485,7 @@ function openDetailById(id){
   $('#dt-prod').textContent=(it.production||[]).join(', ') || '—';
   $('#dt-added').textContent=new Date(it.addedAt||Date.now()).toLocaleDateString();
   $('#dt-status').textContent=it.watched?'Watched':'Unwatched';
-  $('#dt-poster').innerHTML = it.posterUrl ? `<img src="${escapeHTML(it.posterUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:12px">` : firstLetter(it.title);
+  $('#dt-poster').innerHTML = posterImgHTML(it, 'detail') || firstLetter(it.title);
 
   $('#dt-watch').textContent=it.watched?'Mark Unwatched':'Mark Watched';
   $('#dt-watch').onclick=async()=>{ it.watched=!it.watched; await updateItem(it); items=await getAll(); applyFilters(); openDetailById(id); };
@@ -497,7 +547,9 @@ function renderRecs(){
   const recs = computeRecs(scope);
   $('#recoList').innerHTML = recs.map(it=>`
     <div class="reco-item">
-      <div class="reco-poster">${it.posterUrl?`<img src="${escapeHTML(it.posterUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px">`:'Img'}</div>
+      <div class="reco-poster">
+        ${posterImgHTML(it,'reco') || 'Img'}
+      </div>
       <div>
         <strong>${escapeHTML(it.title)}</strong>
         <div class="muted">${it.type==='show'?'Show':'Movie'} • ${it.year??'—'} • ${it.imdb!=null?`IMDb ${it.imdb}`:'No rating'}</div>
@@ -513,14 +565,14 @@ $('#recoScope').onchange=renderRecs;
 const modal = $('#modal');
 const tabs  = [...document.querySelectorAll('.tab')];
 
-/* scroll-lock helper: prevent background page from scrolling while modal is open */
+/* scroll-lock helper */
 const lockScroll = (on) => {
   const docEl = document.documentElement;
   if (on) {
-    const needsComp = window.innerWidth > docEl.clientWidth;                // scrollbar present?
-    const comp = needsComp ? (window.innerWidth - docEl.clientWidth) : 0;   // scrollbar width
+    const needsComp = window.innerWidth > docEl.clientWidth;
+    const comp = needsComp ? (window.innerWidth - docEl.clientWidth) : 0;
     docEl.style.overflow = 'hidden';
-    if (comp) docEl.style.paddingRight = comp + 'px';                       // avoid content shift
+    if (comp) docEl.style.paddingRight = comp + 'px';
   } else {
     docEl.style.overflow = '';
     docEl.style.paddingRight = '';
@@ -531,33 +583,20 @@ $('#btnAdd').onclick = () => {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   lockScroll(true);
-  // focus TMDb search box so you can type immediately
   const q = document.getElementById('tmdb-query');
   if (q) q.focus();
 };
-
 $('#closeModal').onclick = () => {
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   lockScroll(false);
 };
-
-modal.addEventListener('click', (e) => {
-  if (e.target === modal) $('#closeModal').click(); // click backdrop to close
-});
-
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && modal.classList.contains('open')) {
-    $('#closeModal').click();
-  }
-});
-
+modal.addEventListener('click', (e) => { if (e.target === modal) $('#closeModal').click(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) $('#closeModal').click(); });
 tabs.forEach(t => t.addEventListener('click', () => {
   tabs.forEach(x => x.classList.remove('active'));
   t.classList.add('active');
-  ['tmdb', 'manual'].forEach(n => {
-    document.getElementById('tab-' + n).style.display = (t.dataset.tab === n) ? 'block' : 'none';
-  });
+  ['tmdb', 'manual'].forEach(n => document.getElementById('tab-' + n).style.display = (t.dataset.tab === n) ? 'block' : 'none');
 }));
 
 function numOrNull(v){const n=parseFloat(v);return isNaN(n)?null:n;}
@@ -574,7 +613,7 @@ $('#btn-add').addEventListener('click', async ()=>{
     genres: normalizeGenres($('#in-genres').value),
     notes: blankToNull($('#in-notes').value),
     watched: $('#in-watched').checked,
-    imdbId:null, tmdbId:null, posterUrl:null,
+    imdbId:null, tmdbId:null, posterUrl:null, posterPath:null,
     cast:[], production:[], countries:[],
     addedAt: Date.now()
   };
@@ -585,12 +624,15 @@ $('#btn-add').addEventListener('click', async ()=>{
 
 /* ====================== TMDb / OMDb integration ====================== */
 const TMDB_KEY=(window.APP_KEYS&&window.APP_KEYS.TMDB)||''; const OMDB_KEY=(window.APP_KEYS&&window.APP_KEYS.OMDB)||'';
-const TMDB_API='https://api.themoviedb.org/3'; const TMDB_IMG='https://image.tmdb.org/t/p/w342';
+const TMDB_API='https://api.themoviedb.org/3';
 if(!TMDB_KEY) console.warn('TMDb API key missing. Add it in env.js');
 
-async function tmdbSearch(query){
+let tmdbCtrl;
+const debounce = (fn, ms=400) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
+
+async function tmdbSearch(query, { signal } = {}){
   const url=`${TMDB_API}/search/multi?api_key=${encodeURIComponent(TMDB_KEY)}&query=${encodeURIComponent(query)}&include_adult=false`;
-  const r=await fetch(url); if(!r.ok) throw new Error('TMDb search failed');
+  const r=await fetch(url, { signal }); if(!r.ok) throw new Error('TMDb search failed');
   const data=await r.json(); return (data.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv').slice(0,10);
 }
 async function tmdbDetails(kind,id){
@@ -603,17 +645,30 @@ async function fetchImdbRating(imdbId){
   if(!r.ok) return null; const d=await r.json(); const val=parseFloat(d.imdbRating); return isNaN(val)?null:val;
 }
 
-$('#btn-tmdb-search').addEventListener('click', async ()=>{
+async function runTmdbSearch(){
   const q=$('#tmdb-query').value.trim(); if(!q) return;
+  if (tmdbCtrl) tmdbCtrl.abort();
+  tmdbCtrl = new AbortController();
   const container=$('#tmdb-results'); container.innerHTML='<div class="muted">Searching…</div>';
   try{
-    const results=await tmdbSearch(q);
+    const results=await tmdbSearch(q, { signal: tmdbCtrl.signal });
     if(!results.length){ container.innerHTML='<div class="muted">No results.</div>'; return; }
+    const img = (path)=> path ? `
+      <img
+        src="https://image.tmdb.org/t/p/w185${path}"
+        srcset="
+          https://image.tmdb.org/t/p/w92${path} 92w,
+          https://image.tmdb.org/t/p/w154${path} 154w,
+          https://image.tmdb.org/t/p/w185${path} 185w"
+        sizes="(max-width: 640px) 25vw, 48px"
+        loading="lazy" decoding="async" alt=""
+        style="width:44px; height:66px; object-fit:cover; border-radius:8px">` : '';
+
     container.innerHTML = results.map(r=>{
-      const title=r.title||r.name, year=(r.release_date||r.first_air_date||'').slice(0,4), poster=r.poster_path?`${TMDB_IMG}${r.poster_path}`:'';
+      const title=r.title||r.name, year=(r.release_date||r.first_air_date||'').slice(0,4);
       return `<div class="item">
         <div style="display:flex;gap:10px;align-items:center">
-          ${poster?`<img src="${poster}" alt="" style="width:44px;height:66px;object-fit:cover;border-radius:8px">`:''}
+          ${img(r.poster_path)}
           <div><strong>${escapeHTML(title)}</strong> ${year?`<small>(${year})</small>`:''}<div class="muted">${r.media_type.toUpperCase()}</div></div>
         </div>
         <button class="btn-ghost" data-import="${r.media_type}:${r.id}">Add</button>
@@ -622,10 +677,14 @@ $('#btn-tmdb-search').addEventListener('click', async ()=>{
     [...container.querySelectorAll('[data-import]')].forEach(b=>{
       const [k,i]=b.dataset.import.split(':'); const dup=items.some(x=>x.tmdbId===parseInt(i,10)&&x.type===(k==='tv'?'show':'movie')); if(dup){ b.disabled=true; b.textContent='Added'; }
     });
-  }catch{ container.innerHTML='<div class="muted">Search failed.</div>'; }
-});
+  }catch(e){
+    if (e.name !== 'AbortError') container.innerHTML='<div class="muted">Search failed.</div>';
+  }
+}
+$('#btn-tmdb-search').addEventListener('click', runTmdbSearch);
+document.getElementById('tmdb-query').addEventListener('input', debounce(runTmdbSearch, 350));
 
-$('#tmdb-results').addEventListener('click', async e=>{
+document.getElementById('tmdb-results').addEventListener('click', async e=>{
   const btn=e.target.closest('[data-import]'); if(!btn) return;
   const [kind,idStr]=btn.dataset.import.split(':'), id=parseInt(idStr,10);
   try{
@@ -636,7 +695,8 @@ $('#tmdb-results').addEventListener('click', async e=>{
     const cast=(d.credits?.cast||[]).slice(0,10).map(p=>p.name);
     const production=(d.production_companies||[]).map(p=>p.name);
     const countries=(d.production_countries||[]).map(c=>c.iso_3166_1 || c.name);
-    const posterUrl=d.poster_path?`${TMDB_IMG}${d.poster_path}`:null;
+    const posterPath=d.poster_path||null;
+    const posterUrl= posterPath ? `https://image.tmdb.org/t/p/w342${posterPath}` : null;
     const imdbId=d.external_ids?.imdb_id||null;
     const imdb=(await fetchImdbRating(imdbId)) ?? (typeof d.vote_average==='number'?Math.round(d.vote_average*10)/10:null);
     const item={
@@ -645,18 +705,18 @@ $('#tmdb-results').addEventListener('click', async e=>{
       year: parseInt((d.release_date||d.first_air_date||'').slice(0,4),10)||null,
       director, imdb, genres:(d.genres||[]).map(g=>g.name),
       notes: d.overview || null,
-      posterUrl, watched:false, imdbId, tmdbId:d.id, addedAt: Date.now(),
+      posterUrl, posterPath, watched:false, imdbId, tmdbId:d.id, addedAt: Date.now(),
       cast, production, countries
     };
     if(existsByIds(item)){ alert('Already in your list.'); return; }
-    await addItem(item); items=await getAll(); applyFilters(); $('#addMsg').textContent='Added from TMDb ✔'; setTimeout(()=>$('#addMsg').textContent='',1200);
+    await addItem(item); items=await getAll(); applyFilters(); document.getElementById('addMsg').textContent='Added from TMDb ✔'; setTimeout(()=>document.getElementById('addMsg').textContent='',1200);
   }catch(err){ alert('Import failed: '+err.message); }
 });
 
 /* ====================== Bind inputs ====================== */
-$('#omni').addEventListener('input', applyFilters);
-$('#sortSel').addEventListener('change', applyFilters);
-$('#chkUnwatched').addEventListener('change', applyFilters);
+document.getElementById('omni').addEventListener('input', applyFilters);
+document.getElementById('sortSel').addEventListener('change', applyFilters);
+document.getElementById('chkUnwatched').addEventListener('change', applyFilters);
 
 /* ====================== Service Worker ====================== */
 function registerSW(){ if(!('serviceWorker' in navigator)) return; navigator.serviceWorker.register('sw.js').catch(()=>{}); }
@@ -669,7 +729,6 @@ function registerSW(){ if(!('serviceWorker' in navigator)) return; navigator.ser
   route();
   registerSW();
 })();
-
 </script>
 </body>
 </html>

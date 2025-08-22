@@ -8,1073 +8,1531 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <style>
-    :root{
-      --bg:#0b1020; --panel:#111827; --ink:#e5e7eb; --muted:#9ca3af; --line:#1f2937; --accent:#60a5fa;
-      --card:#0f1428; --chip:#1a2544; --overlay:rgba(6,10,22,.72);
-      --heroH: 360px; --heroW: calc(var(--heroH) * 2 / 3);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font:16px system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(180deg,#0b1020,#0b1020 40%,#0e1630);color:var(--ink)}
-    header{position:sticky;top:0;z-index:20;background:rgba(11,16,32,.65);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
-    .wrap{max-width:1200px;margin:0 auto;padding:14px 16px}
-    h1{margin:6px 0 4px;font-size:22px}
-    .sub{color:var(--muted);font-size:13px}
+      /* ===================================================================
+         1) THEME TOKENS & BASE
+         =================================================================== */
+      :root {
+        --bg: #0b1020;
+        --panel: #111827;
+        --ink: #e5e7eb;
+        --muted: #9ca3af;
+        --line: #1f2937;
+        --accent: #60a5fa;
+        --card: #0f1428;
+        --chip: #1a2544;
+        --overlay: rgba(6,10,22,.72);
+        --heroH: 360px;
+        --heroW: calc(var(--heroH) * 2 / 3);
+      }
 
-    /* Toolbar */
-    .toolbar{display:grid;grid-template-columns:1fr 140px auto auto auto auto auto;gap:8px;align-items:center;margin-top:8px}
-    .toolbar > *{min-width:0}
-    input,select,textarea{background:#0b1226;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-    button,.btn{background:#172554;color:#e5e7eb;border:1px solid var(--line);padding:10px 12px;border-radius:10px;cursor:pointer}
-    button:hover,.btn:hover{background:#1e3a8a}
-    .btn-ghost{background:transparent}
-    .muted{color:var(--muted)}
-    @media (max-width:1000px){ .toolbar{grid-template-columns:1fr auto auto auto} }
+      * { box-sizing: border-box; }
 
-    /* Grid & lists */
-    .grid{display:grid;gap:12px}
-    .cards{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
-    .list{display:grid;gap:12px}
+      body {
+        margin: 0;
+        font: 16px system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        background: linear-gradient(180deg,#0b1020,#0b1020 40%,#0e1630);
+        color: var(--ink);
+      }
 
-    /* Chips */
-    .chips{display:flex;gap:6px;flex-wrap:wrap}
-    .chip{background:#1a2544;border:1px solid var(--line);color:#a9b8ff;padding:2px 8px;border-radius:999px;font-size:12px}
+      /* ===================================================================
+         2) LAYOUT: HEADER & WRAPPER
+         =================================================================== */
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        background: rgba(11,16,32,.65);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid var(--line);
+      }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 14px 16px; }
+      h1 { margin: 6px 0 4px; font-size: 22px; }
+      .sub { color: var(--muted); font-size: 13px; }
 
-    /* Card */
-    .item{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer}
-    .poster{position:relative;aspect-ratio:2/3;background:linear-gradient(135deg,#0b1226,#0f1a36);display:flex;align-items:center;justify-content:center}
-    .poster img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .poster .letter{position:absolute;color:#7f92c9;font-weight:800;font-size:54px}
-    .titlebar{
-      margin:8px 12px 0;
-      padding:6px 10px;
-      border:1px solid var(--line);
-      background:#0b1226;
-      border-radius:10px;
-      font-weight:700;
-      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-    }
-    .meta{padding:10px 12px}
-    .meta-row{display:flex;align-items:center;gap:8px}
-    .pill{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line)}
-    .pill.movie{color:#fca5a5}
-    .pill.show{color:#93c5fd}
-    .rating{margin-left:auto;background:#10233f;border:1px solid #28436f;padding:2px 8px;border-radius:8px}
+      /* ===================================================================
+         3) CONTROLS: INPUTS & BUTTONS
+         =================================================================== */
+      input, select, textarea {
+        background: #0b1226;
+        color: var(--ink);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      button, .btn {
+        background: #172554;
+        color: #e5e7eb;
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+      }
+      button:hover, .btn:hover { background: #1e3a8a; }
+      .btn-ghost { background: transparent; }
+      .muted { color: var(--muted); }
 
-    /* Detail */
-    .detail{display:none}
-    .detail.show{display:block}
-    .headbar{display:flex;align-items:center;gap:8px;margin:12px 0}
-    .back{background:#172554;border:1px solid var(--line);padding:8px 12px;border-radius:10px}
-    .hero{display:flex;gap:16px;padding:14px;background:var(--card);border:1px solid var(--line);border-radius:14px}
-    .hero .poster{width:var(--heroW);height:var(--heroH);border-radius:12px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:calc(var(--heroH)*.45);color:#7f92c9}
-    .hmeta{display:flex;flex-direction:column;gap:8px;flex:1 1 auto;min-width:0}
-    .hmeta .row{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
-    .facts{display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;margin-top:6px}
-    .kv b{color:var(--muted);display:inline-block;min-width:90px}
-    @media (max-width:900px){ :root{--heroH:300px} }
-    @media (max-width:720px){ :root{--heroH:240px} .hero{flex-direction:column;align-items:center} .facts{grid-template-columns:1fr} }
+      /* ===================================================================
+         4) TOOLBAR
+         =================================================================== */
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr 140px auto auto auto auto auto;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .toolbar > * { min-width: 0; }
+      @media (max-width:1000px) {
+        .toolbar { grid-template-columns: 1fr auto auto auto; }
+      }
 
-    /* Reco drawer: isolate so outside rules can't leak in */
-    .reco-drawer{
-      position:fixed;
-      top:120px; right:100px; width:430px; max-width:95vw;
-      background:var(--panel); border:1px solid var(--line); border-radius:16px;
-      box-shadow:0 20px 50px rgba(0,0,0,.45);
-      padding:12px; display:none; z-index:40;       /* <- higher & isolated */
-      max-height:calc(100vh - 140px); overflow:auto;
-      isolation:isolate;                             /* <- key line */
-    }
+      /* ===================================================================
+         5) GRID & LISTS
+         =================================================================== */
+      .grid { display: grid; gap: 12px; }
+      .cards { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+      .list { display: grid; gap: 12px; }
 
-    .reco-drawer.open{ display:block; }
+      /* ===================================================================
+         6) CHIPS
+         =================================================================== */
+      .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+      .chip {
+        background: #1a2544;
+        border: 1px solid var(--line);
+        color: #a9b8ff;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 16px;
+        white-space: nowrap;
+      }
 
-    .reco-item{
-      display:flex; gap:10px; align-items:center;
-      border:1px solid var(--line); border-radius:12px;
-      padding:10px; background:#0f1428;
-    }
+      /* plain-text list styling for detail view */
+      .rowtext { display: block; line-height: 1.6; }
+      .rowtext .name { white-space: nowrap; } /* e.g., "Warner Bros" never breaks */
 
-    /* Clamp poster strictly and force cover behaviour */
-    .reco-poster{
-      flex:0 0 56px; width:56px; height:84px;
-      border-radius:8px; overflow:hidden; background:#101a34;
-    }
-    .reco-poster img{
-      display:block !important;
-      width:100% !important;
-      height:100% !important;
-      object-fit:cover !important;
-      position:static !important; /* guard against any absolute rules elsewhere */
-    }
+      /* ===================================================================
+         7) CARD
+         =================================================================== */
+      .item {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+        cursor: pointer;
+      }
+      .poster {
+        position: relative;
+        aspect-ratio: 2/3;
+        background: linear-gradient(135deg,#0b1226,#0f1a36);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .poster img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .titlebar {
+        margin: 8px 12px 0;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        background: #0b1226;
+        border-radius: 10px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .meta { padding: 10px 12px; }
+      .meta-row { display: flex; align-items: center; gap: 8px; }
 
+      .pill { font-size: 12px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--line); }
+      .pill.movie { color: #fca5a5; }
+      .pill.show  { color: #93c5fd; }
 
-    /* FAB + Modal (Add) */
-    .fab{position:fixed;right:24px;bottom:24px;background:var(--accent);color:#06121f;border-color:#274c7a;padding:14px 16px;border-radius:14px;font-weight:600;z-index:16}
+      .rating {
+        margin-left: auto;
+        background: #10233f;
+        border: 1px solid #28436f;
+        padding: 2px 8px;
+        border-radius: 8px;
+      }
 
-    /* modal (Add sheet) */
-    .overlay{
-      position:fixed; inset:0;
-      background:var(--overlay);
-      display:none; align-items:flex-end; justify-content:center;
-      z-index:30;
-      overscroll-behavior:contain;
-    }
-    .overlay.open{ display:flex; }
+      /* ===================================================================
+         8) DETAIL VIEW
+         =================================================================== */
+      .detail { display: none; }
+      .detail.show { display: block; }
 
-    .sheet{
-      width:100%; max-width:900px;
-      background:var(--panel); border:1px solid var(--line);
-      border-top-left-radius:16px; border-top-right-radius:16px;
-      box-shadow:0 -10px 30px rgba(0,0,0,.5);
-      max-height:92vh;
-      display:flex; flex-direction:column;
-    }
-    .sheet .head{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:12px 16px; border-bottom:1px solid var(--line);
-      position:sticky; top:0; z-index:3; background:var(--panel);
-    }
-    .tabs{
-      display:flex; gap:8px; padding:8px 12px; border-bottom:1px solid var(--line);
-      position:sticky; top:48px; z-index:2; background:var(--panel);
-    }
-    .tab{ padding:8px 10px; border:1px solid var(--line); border-radius:10px; background:#0b1226; cursor:pointer }
-    .tab.active{ background:#1e2a52 }
+      .headbar { display: flex; align-items: center; gap: 8px; margin: 12px 0; }
+      .back { background: #172554; border: 1px solid var(--line); padding: 8px 12px; border-radius: 10px; }
 
-    .sheet .body{
-      padding:12px 16px;
-      overflow:auto;
-      -webkit-overflow-scrolling:touch;
-    }
-    #tab-tmdb .row-2{
-      position:sticky; top:0; z-index:1;
-      background:var(--panel);
-      padding-top:4px; padding-bottom:8px;
-      border-bottom:1px solid var(--line);
-    }
-    .row-2{display:grid;grid-template-columns:1fr auto;gap:8px}
-    .list-compact .item{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:12px;border:1px solid var(--line);background:#0f1428}
+      /* hero */
+      .hero {
+        display: grid;
+        grid-template-columns: var(--heroW) 1fr;
+        gap: 16px;
+        padding: 14px;
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        align-items: flex-start;
+      }
+
+      /* hero poster */
+      .hero .poster {
+        width: var(--heroW);
+        height: var(--heroH);
+        border-radius: 12px;
+        overflow: hidden;
+        flex: 0 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: calc(var(--heroH) * .45);
+        color: #7f92c9;
+        background: linear-gradient(135deg,#0b1226,#0f1a36);
+      }
+      .hero .poster img { width: 100%; height: 100%; object-fit: cover; }
+
+      /* right column */
+      .hmeta { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+
+      /* title row */
+      .hmeta h2 { margin: 0; font-size: 44px; }
+      .hmeta .titleRow { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+      .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+      .badge { font-size: 14px; padding: 4px 12px; border-radius: 999px; border: 1px solid var(--line); background: #0b1226; }
+      .badge.imdb { background: #deb522; border-color: #28436f; border-radius: 5px; color: black; font-weight: bold; }
+      .badge.status--watched   { color: #a7f3d0; border-color: #1f3b2f; background: #0e1f1b; }
+      .badge.status--unwatched { color: #fcd34d; border-color: #604512; background: #231c0a; }
+
+      /* genre chips row */
+      #dt-genres { margin-top: 2px; }
+
+      /* sections */
+      .sections { display: grid; gap: 10px; }
+      .section {
+        border: 1px solid var(--line);
+        background: rgba(16,22,44,.6);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+      .section h3 { margin: 0 0 6px; font-size: 14px; color: #cbd5e1; letter-spacing: .2px; }
+
+      /* key–value grid */
+      .kvgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 18px; }
+      .kv { display: flex; gap: 8px; align-items: flex-start; }
+      .kv b { color: var(--muted); min-width: 110px; font-weight: 600; }
+
+      /* cast/prod chip rows */
+      .rowchips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-width: 0; }
+
+      /* overview */
+      #dt-overview { white-space: pre-wrap; line-height: 1.55; }
+
+      /* detail buttons */
+      .btn-sm {
+        font-size: 16px;
+        padding: 6px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #0b1226;
+        color: var(--ink);
+        cursor: pointer;
+      }
+      .btn-sm:hover { background: #14244a; }
+
+      /* responsive for detail */
+      @media (max-width:900px) { :root { --heroH: 300px; } }
+      @media (max-width:720px) {
+        :root { --heroH: 240px; }
+        .hero { grid-template-columns: 1fr; }
+        .kvgrid { grid-template-columns: 1fr; }
+      }
+
+      /* ===================================================================
+         9) RECOMMENDATIONS DRAWER (ISOLATED)
+         =================================================================== */
+      .reco-drawer {
+        position: fixed;
+        top: 120px;
+        right: 100px;
+        width: 430px;
+        max-width: 95vw;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        box-shadow: 0 20px 50px rgba(0,0,0,.45);
+        padding: 12px;
+        display: none;
+        z-index: 40;
+        max-height: calc(100vh - 140px);
+        overflow: auto;
+        isolation: isolate; /* key line */
+      }
+      .reco-drawer.open { display: block; }
+
+      .reco-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 10px;
+        background: #0f1428;
+      }
+
+      /* clamp poster strictly and force cover behaviour */
+      .reco-poster {
+        flex: 0 0 56px;
+        width: 56px;
+        height: 84px;
+        border-radius: 8px;
+        overflow: hidden;
+        background: #101a34;
+      }
+      .reco-poster img {
+        display: block !important;
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        position: static !important; /* guard against any absolute rules elsewhere */
+      }
+
+      /* ===================================================================
+         10) FAB & ADD MODAL
+         =================================================================== */
+      /* FAB */
+      .fab {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        background: var(--accent);
+        color: #06121f;
+        border-color: #274c7a;
+        padding: 14px 16px;
+        border-radius: 14px;
+        font-weight: 600;
+        z-index: 16;
+      }
+
+      /* overlay */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: var(--overlay);
+        display: none;
+        align-items: flex-end;
+        justify-content: center;
+        z-index: 30;
+        overscroll-behavior: contain;
+      }
+      .overlay.open { display: flex; }
+
+      /* sheet */
+      .sheet {
+        width: 100%;
+        max-width: 900px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-top-left-radius: 16px;
+        border-top-right-radius: 16px;
+        box-shadow: 0 -10px 30px rgba(0,0,0,.5);
+        max-height: 92vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .sheet .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 0;
+        z-index: 3;
+        background: var(--panel);
+      }
+
+      /* tabs */
+      .tabs {
+        display: flex;
+        gap: 8px;
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--line);
+        position: sticky;
+        top: 48px;
+        z-index: 2;
+        background: var(--panel);
+      }
+      .tab { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: #0b1226; cursor: pointer; }
+      .tab.active { background: #1e2a52; }
+
+      /* sheet body */
+      .sheet .body {
+        padding: 12px 16px;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      /* TMDb search sticky row */
+      #tab-tmdb .row-2 {
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        background: var(--panel);
+        padding-top: 4px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      /* form rows & compact list */
+      .row-2 { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+      .list-compact .item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #0f1428;
+      }
+
   </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <h1>🎬 Watchlist </h1>
-<!--    <div class="sub">Minimal cards (poster + title overlay). Click a card for details. Fully offline with Import/Export.</div>-->
+    <!-- =============================================================
+         HEADER
+         ============================================================= -->
+    <header>
+      <div class="wrap">
+        <h1>🎬 Watchlist </h1>
+        <!-- <div class="sub">Minimal cards (poster + title overlay). Click a card for details. Fully offline with Import/Export.</div> -->
 
-    <div class="toolbar">
-        <input id="omni"
-          placeholder='Search… e.g. nolan actor:"anne hathaway" genre:sci-fi year:>=2010 imdb:>=8 provider:netflix language:japanese seasons:>=3 runtime:>120 unwatched' />
+        <div class="toolbar">
+          <input
+            id="omni"
+            placeholder='Search… e.g. nolan actor:"anne hathaway" genre:sci-fi year:>=2010 imdb:>=8 provider:netflix language:japanese seasons:>=3 runtime:>120 unwatched'
+          />
 
-      <select id="sortSel">
-        <option value="imdb-desc">Sort: IMDb ⬇︎</option>
-        <option value="year-desc">Year ⬇︎</option>
-        <option value="year-asc">Year ⬆︎</option>
-        <option value="title-asc">Title A–Z</option>
-        <option value="added-desc">Recently Added</option>
-      </select>
-      <label class="muted"><input id="chkUnwatched" type="checkbox" /> Unwatched</label>
+          <select id="sortSel">
+            <option value="imdb-desc">Sort: IMDb ⬇︎</option>
+            <option value="year-desc">Year ⬇︎</option>
+            <option value="year-asc">Year ⬆︎</option>
+            <option value="title-asc">Title A–Z</option>
+            <option value="added-desc">Recently Added</option>
+          </select>
 
-      <button id="btnReco">Recommendations</button>
-      <button id="btn-export" title="Download JSON">Export</button>
-      <label class="btn" id="btn-import">Import
-        <input id="file-import" type="file" accept="application/json" hidden>
-      </label>
-      <button id="btn-clear" class="btn-ghost" title="Clear all items (confirm)">Clear</button>
-    </div>
+          <label class="muted">
+            <input id="chkUnwatched" type="checkbox" />
+            Unwatched
+          </label>
 
-    <div id="activeFilters" class="chips" style="margin-top:6px"></div>
-  </div>
-</header>
+          <button id="btnReco">Recommendations</button>
+          <button id="btn-export" title="Download JSON">Export</button>
 
-<main class="wrap" style="margin-top:12px">
-  <!-- GRID -->
-  <section id="view-grid" class="grid">
-    <div id="grid-cards" class="list cards"></div>
-  </section>
+          <label class="btn" id="btn-import">Import
+            <input id="file-import" type="file" accept="application/json" hidden>
+          </label>
 
-  <!-- DETAIL -->
-  <section id="view-detail" class="detail">
-    <div class="headbar">
-      <button id="btnBack" class="back">← Back</button>
-      <strong id="dt-breadcrumb" class="muted"></strong>
-    </div>
-    <div class="hero">
-      <div id="dt-poster" class="poster">P</div>
-      <div class="hmeta">
-        <div class="row">
-          <h2 id="dt-title" style="margin:0"></h2>
-          <span id="dt-year" class="muted"></span>
-          <span id="dt-type" class="pill"></span>
-          <span id="dt-imdb" class="pill"></span>
-        </div>
-        <div id="dt-genres" class="chips"></div>
-        <div id="dt-overview" class="muted"></div>
-        <div class="row" style="gap:8px">
-          <button id="dt-watch">Mark Watched</button>
-          <button id="dt-edit" class="btn-ghost">Edit</button>
-          <button id="dt-del" class="btn-ghost">Delete</button>
-        </div>
-        <div class="facts">
-          <div class="kv"><b>Director:</b> <span id="dt-director"></span></div>
-          <div class="kv"><b>Added:</b> <span id="dt-added"></span></div>
-
-          <div class="kv"><b>Cast:</b> <span id="dt-cast"></span></div>
-          <div class="kv"><b>Status:</b> <span id="dt-status"></span></div>
-
-          <div class="kv"><b>Countries:</b> <span id="dt-countries"></span></div>
-          <div class="kv"><b>Languages:</b> <span id="dt-languages"></span></div>
-
-          <div class="kv"><b>Runtime:</b> <span id="dt-runtime"></span></div>
-          <div class="kv"><b>Ep. length:</b> <span id="dt-epRuntime"></span></div>
-
-          <div class="kv"><b>Seasons/Episodes:</b> <span id="dt-seasons"></span></div>
-          <div class="kv"><b>Networks/Studios:</b> <span id="dt-networks"></span></div>
-
-          <div class="kv"><b>Certification:</b> <span id="dt-cert"></span></div>
-          <div class="kv"><b>Release/Air Dates:</b> <span id="dt-airdates"></span></div>
-
-          <div class="kv"><b>Budget/Revenue:</b> <span id="dt-money"></span></div>
-
-          <div class="kv"><b>Watch on:</b> <span id="dt-providers"></span></div>
-
-          <div class="kv" style="grid-column:1/-1"><b>Production:</b> <span id="dt-prod"></span></div>
-
-          <div class="kv"><b>Homepage:</b> <span id="dt-home"></span></div>
-          <div class="kv"><b>Trailer:</b> <span id="dt-trailer"></span></div>
+          <button id="btn-clear" class="btn-ghost" title="Clear all items (confirm)">Clear</button>
         </div>
 
+        <div id="activeFilters" class="chips" style="margin-top:6px"></div>
       </div>
-    </div>
-  </section>
-</main>
+    </header>
 
-<!-- Recommendations Drawer -->
-<aside id="reco" class="reco-drawer" aria-live="polite">
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-    <strong>Top Picks</strong>
-    <select id="recoScope" style="width:160px">
-      <option value="unwatched">Unwatched</option>
-      <option value="all">All items</option>
-    </select>
-  </div>
-  <div id="recoList" class="list"></div>
-</aside>
+    <!-- =============================================================
+         MAIN
+         ============================================================= -->
+    <main class="wrap" style="margin-top:12px">
+      <!-- GRID -->
+      <section id="view-grid" class="grid">
+        <div id="grid-cards" class="list cards"></div>
+      </section>
 
-<!-- FAB Add -->
-<button id="btnAdd" class="fab">＋ Add</button>
-
-<!-- Add Modal -->
-<div id="modal" class="overlay" aria-hidden="true">
-  <div class="sheet" role="dialog" aria-modal="true">
-    <div class="head">
-      <strong>Add a Title</strong>
-      <button id="closeModal" class="btn-ghost">Close</button>
-    </div>
-    <div class="tabs">
-      <button class="tab active" data-tab="tmdb">Search TMDb</button>
-      <button class="tab" data-tab="manual">Manual</button>
-    </div>
-    <div class="body">
-      <!-- TMDb -->
-      <div id="tab-tmdb">
-        <div class="row-2">
-          <input id="tmdb-query" placeholder="Type a title, e.g., Inception" />
-          <button id="btn-tmdb-search">Search</button>
+      <!-- DETAIL -->
+      <section id="view-detail" class="detail">
+        <!-- headbar -->
+        <div class="headbar">
+          <button id="btnBack" class="back">← Back</button>
+          <strong id="dt-breadcrumb" class="muted"></strong>
         </div>
-        <div id="tmdb-results" class="list list-compact" style="margin-top:10px"></div>
-      </div>
-      <!-- Manual -->
-      <div id="tab-manual" style="display:none">
-        <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
-          <input id="in-title" placeholder="Title *" />
-          <select id="in-type"><option value="movie">Movie</option><option value="show">Show</option></select>
-          <input id="in-year" type="number" placeholder="Year" />
-          <input id="in-director" placeholder="Director(s)" />
-          <input id="in-imdb" type="number" min="0" max="10" step="0.1" placeholder="IMDb (0–10)" />
-          <input id="in-genres" placeholder="Genres (comma separated)" />
-          <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="grid-column:1/-1"></textarea>
-        </div>
-        <div class="toolbar" style="margin-top:10px;justify-content:flex-end">
-          <label class="muted" style="display:flex;align-items:center;gap:6px"><input id="in-watched" type="checkbox" /> Mark watched</label>
-          <button id="btn-add">Add</button>
-        </div>
-        <div id="addMsg" class="muted" style="margin-top:6px"></div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<script src="env.js"></script>
-<script>
-/* ====================== IndexedDB ====================== */
-const DB='watchlist-db-v1', STORE='items'; let db;
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=e=>{const s=e.target.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});s.createIndex('addedAt','addedAt');s.createIndex('title','title');s.createIndex('imdb','imdb');s.createIndex('watched','watched');};r.onsuccess=()=>{db=r.result;res();};r.onerror=()=>rej(r.error);});}
-function tx(mode='readonly'){return db.transaction(STORE,mode).objectStore(STORE);}
-const addItem=v=>new Promise((res,rej)=>{const r=tx('readwrite').add(v);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
-const updateItem=v=>new Promise((res,rej)=>{const r=tx('readwrite').put(v);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
-const deleteItemById=id=>new Promise((res,rej)=>{const r=tx('readwrite').delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
-const deleteAll=()=>new Promise((res,rej)=>{const r=tx('readwrite').clear();r.onsuccess=()=>res();r.onerror=()=>rej(r.error);});
-const getAll=()=>new Promise((res,rej)=>{const r=tx().getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});
+        <!-- hero -->
+        <div class="hero">
+          <!-- Left: Poster -->
+          <div id="dt-poster" class="poster">P</div>
 
-/* ====================== State & helpers ====================== */
-let items=[];
-const $=sel=>document.querySelector(sel);
-const list=$('#grid-cards');
+          <!-- Right: Content -->
+          <div class="hmeta">
+            <!-- title row -->
+            <div class="titleRow">
+              <h2 id="dt-title"></h2>
+              <span id="dt-year" class="muted"></span>
+            </div>
 
-function escapeHTML(s){return (s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function norm(s){return (s??'').trim().toLowerCase().replace(/\s+/g,' ');}
-function firstLetter(s){return (s||'?').trim().charAt(0).toUpperCase()||'?';}
-function keyTitleYear(it){return `${norm(it.title)}|${it.year??''}`;}
-function existsByIds(c){const imdb=norm(c.imdbId), tmdb=c.tmdbId??null, key=keyTitleYear(c); return items.some(x => (imdb && norm(x.imdbId)===imdb) || (tmdb && x.tmdbId===tmdb) || keyTitleYear(x)===key);}
+            <!-- badges -->
+            <div class="badges" id="dt-badges">
+              <!-- pills/badges are injected here -->
+            </div>
 
-/* ====================== Omnibox parser ====================== */
-function tokenize(q){ const out=[]; (q||'').replace(/"([^"]+)"|(\S+)/g,(_,a,b)=>out.push(a||b)); return out; }
+            <!-- genres -->
+            <div id="dt-genres" class="chips"></div>
 
-function parseOmni(q){
-  const tks = tokenize((q||'').trim());
-  const res = {
-    text:[],
-    dir:[], actor:[], prod:[], genre:[], country:[],
-    language:[], provider:[], network:[], cert:[], status:[],
-    type:null,
-    yearMin:null, yearMax:null,
-    imdbMin:null, imdbMax:null,
-    runtimeMin:null, runtimeMax:null,        // movie minutes
-    epMin:null, epMax:null,                  // episode minutes
-    seasonsMin:null, seasonsMax:null,
-    episodesMin:null, episodesMax:null,
-    watched:null
-  };
+            <!-- overview -->
+            <div class="section">
+              <div id="dt-overview" class="muted"></div>
+            </div>
 
-  const add=(k,v)=>{ if(v) res[k].push(v.toLowerCase()); };
-  const asNum = s => { const n=parseFloat(s); return isNaN(n)?null:n; };
+            <!-- sections: credits / stats / production / links -->
+            <div class="sections">
+              <!-- credits -->
+              <div class="section" id="sec-credits" style="display:none">
+                <div class="kvgrid">
+                  <div class="kv"><b>Director</b> <span id="dt-director"></span></div>
+                  <div class="kv"><b>Status</b> <span id="dt-status"></span></div>
+                  <div class="kv" id="wrap-cast" style="display:none">
+                    <b>Cast</b>
+                    <div id="dt-cast" class="rowtext"></div>
+                  </div>
+                </div>
+              </div>
 
-  // map aliases to canonical keys
-  const kmap={
-    director:'dir', dir:'dir',
-    actor:'actor', cast:'actor',
-    prod:'prod', production:'prod', studio:'prod',
-    genre:'genre', g:'genre',
-    country:'country', c:'country',
-    language:'language', lang:'language', l:'language',
-    provider:'provider', prov:'provider', platform:'provider', service:'provider',
-    network:'network', net:'network',
-    type:'type', t:'type',
-    imdb:'imdb', rating:'imdb',
-    year:'year', y:'year',
-    runtime:'runtime', rt:'runtime', duration:'runtime',
-    epruntime:'ep', eruntime:'ep', ep:'ep',
-    seasons:'seasons', s:'seasons',
-    episodes:'episodes', e:'episodes',
-    cert:'cert', certification:'cert',
-    status:'status',
-    watched:'watched'
-  };
-  
-  // numeric pattern helper (>=, <=, >, <, =, or range a-b)
-  function parseNumeric(key, val){
-    const range = val.match(/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/);
-    const gte   = val.match(/^>=\s*([0-9.]+)$/);
-    const lte   = val.match(/^<=\s*([0-9.]+)$/);
-    const gt    = val.match(/^>\s*([0-9.]+)$/);
-    const lt    = val.match(/^<\s*([0-9.]+)$/);
-    const eq    = val.match(/^=\s*([0-9.]+)$/) || val.match(/^([0-9.]+)$/);
-    const set = (lo,hi,minK,maxK)=>{ res[minK]=lo; res[maxK]=hi; };
+              <!-- stats -->
+              <div class="section" id="sec-stats" style="display:none">
+                <div class="kvgrid" id="dt-stats"></div>
+              </div>
 
-    switch(key){
-      case 'year':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'yearMin','yearMax'); }
-        else if(gte){ res.yearMin=asNum(gte[1]); }
-        else if(lte){ res.yearMax=asNum(lte[1]); }
-        else if(gt){  const n=asNum(gt[1]); res.yearMin = n!=null?n+1:null; }
-        else if(lt){  const n=asNum(lt[1]); res.yearMax = n!=null?n-1:null; }
-        else if(eq){  const n=asNum(eq[1]); res.yearMin=n; res.yearMax=n; }
-        return true;
-      case 'imdb':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'imdbMin','imdbMax'); }
-        else if(gte){ res.imdbMin=asNum(gte[1]); }
-        else if(lte){ res.imdbMax=asNum(lte[1]); }
-        else if(gt){  res.imdbMin=asNum(gt[1]); }
-        else if(lt){  res.imdbMax=asNum(lt[1]); }
-        else if(eq){  const n=asNum(eq[1]); res.imdbMin=n; res.imdbMax=n; }
-        return true;
-      case 'runtime':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'runtimeMin','runtimeMax'); }
-        else if(gte){ res.runtimeMin=asNum(gte[1]); }
-        else if(lte){ res.runtimeMax=asNum(lte[1]); }
-        else if(gt){  res.runtimeMin=asNum(gt[1])+1; }
-        else if(lt){  res.runtimeMax=asNum(lt[1])-1; }
-        else if(eq){  const n=asNum(eq[1]); res.runtimeMin=n; res.runtimeMax=n; }
-        return true;
-      case 'ep':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'epMin','epMax'); }
-        else if(gte){ res.epMin=asNum(gte[1]); }
-        else if(lte){ res.epMax=asNum(lte[1]); }
-        else if(gt){  res.epMin=asNum(gt[1])+1; }
-        else if(lt){  res.epMax=asNum(lt[1])-1; }
-        else if(eq){  const n=asNum(eq[1]); res.epMin=n; res.epMax=n; }
-        return true;
-      case 'seasons':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'seasonsMin','seasonsMax'); }
-        else if(gte){ res.seasonsMin=asNum(gte[1]); }
-        else if(lte){ res.seasonsMax=asNum(lte[1]); }
-        else if(gt){  res.seasonsMin=asNum(gt[1])+1; }
-        else if(lt){  res.seasonsMax=asNum(lt[1])-1; }
-        else if(eq){  const n=asNum(eq[1]); res.seasonsMin=n; res.seasonsMax=n; }
-        return true;
-      case 'episodes':
-        if(range){ set(asNum(range[1]), asNum(range[2]), 'episodesMin','episodesMax'); }
-        else if(gte){ res.episodesMin=asNum(gte[1]); }
-        else if(lte){ res.episodesMax=asNum(lte[1]); }
-        else if(gt){  res.episodesMin=asNum(gt[1])+1; }
-        else if(lt){  res.episodesMax=asNum(lt[1])-1; }
-        else if(eq){  const n=asNum(eq[1]); res.episodesMin=n; res.episodesMax=n; }
-        return true;
-    }
-    return false;
-  }
-  
-  for (const tk of tks){
-    const m = tk.match(/^(\w+):(.*)$/);
-    if(!m){
-      const w=tk.toLowerCase();
-      if(w==='unwatched') res.watched=false; else
-      if(w==='watched')   res.watched=true;  else
-      res.text.push(w);
-      continue;
-    }
+              <!-- production -->
+              <div class="section" id="sec-production" style="display:none">
+                <div class="kvgrid">
+                  <div class="kv" id="kv-prod" style="display:none"><b>Production</b> <span id="dt-prod"></span></div>
+                  <div class="kv" id="kv-net"  style="display:none"><b>Networks</b>   <span id="dt-net"></span></div>
+                  <div class="kv" id="kv-prov" style="display:none"><b>Providers</b>  <span id="dt-prov"></span></div>
+                  <div class="kv" id="kv-cty"  style="display:none"><b>Countries</b>  <span id="dt-cty"></span></div>
+                  <div class="kv" id="kv-lang" style="display:none"><b>Languages</b>  <span id="dt-lang"></span></div>
+                  <div class="kv"><b>Added</b> <span id="dt-added"></span></div>
+                </div>
+              </div>
 
-    const rawKey = m[1].toLowerCase();
-    const key    = kmap[rawKey] || rawKey;
-    let   val    = m[2];
+              <!-- links -->
+              <div class="section" id="sec-links" style="display:none">
+                <h3>Links</h3>
+                <div class="rowchips" id="dt-links"></div>
+              </div>
+            </div>
 
-    if((val.startsWith('"')&&val.endsWith('"'))||(val.startsWith("'")&&val.endsWith("'"))) val=val.slice(1,-1);
-
-    if(key==='type'){
-      const v=val.toLowerCase(); res.type = v.startsWith('s')?'show' : v.startsWith('m')?'movie' : null; continue;
-    }
-    if(key==='watched'){
-      const v=val.toLowerCase(); res.watched = (v==='1'||v==='true'||v.startsWith('y')); continue;
-    }
-
-    // numeric keys
-    if(['year','imdb','runtime','ep','seasons','episodes'].includes(key)){
-      parseNumeric(key,val);
-      continue;
-    }
-
-    // text-list keys
-    if(key==='dir') add('dir',val);
-    else if(key==='actor') add('actor',val);
-    else if(key==='prod') add('prod',val);
-    else if(key==='genre') add('genre',val);
-    else if(key==='country') add('country',val);
-    else if(key==='language') add('language',val);
-    else if(key==='provider') add('provider',val);
-    else if(key==='network') add('network',val);
-    else if(key==='cert') add('cert',val);
-    else if(key==='status') add('status',val);
-    else res.text.push(`${key}:${val}`.toLowerCase());
-  }
-  return res;
-}
-
-function inRange(val, min, max){
-  if(val==null) val = -Infinity;        // treat missing as very small; adjust if you prefer to keep items w/o values
-  if(min!=null && val < min) return false;
-  if(max!=null && val > max) return false;
-  return true;
-}
-
-function includesAll(hayArr, needles){
-  if(!needles.length) return true;
-  const H=(hayArr||[]).map(s=>(s||'').toLowerCase());
-  return needles.every(n=>H.some(h=>h.includes(n)));
-}
-
-/* ====================== Filters ====================== */
-function renderActiveFiltersChips(q, forceUnwatched){
-  const chips=[];
-  const push = (l,vals)=>vals.forEach(v=>chips.push(`<span class="chip">${l}:${escapeHTML(v)}</span>`));
-
-  q.text.forEach(t=>chips.push(`<span class="chip">${escapeHTML(t)}</span>`));
-  push('dir',q.dir); push('actor',q.actor); push('prod',q.prod);
-  push('genre',q.genre); push('country',q.country);
-  push('lang',q.language); push('provider',q.provider); push('network',q.network);
-  push('cert',q.cert); push('status',q.status);
-  if(q.type) chips.push(`<span class="chip">type:${escapeHTML(q.type)}</span>`);
-
-  const rangeChip=(k,min,max)=>{ if(min!=null || max!=null) chips.push(`<span class="chip">${k}:${min??''}-${max??''}</span>`); };
-  rangeChip('year',q.yearMin,q.yearMax);
-  rangeChip('imdb',q.imdbMin,q.imdbMax);
-  rangeChip('rt',q.runtimeMin,q.runtimeMax);
-  rangeChip('ep',q.epMin,q.epMax);
-  rangeChip('seasons',q.seasonsMin,q.seasonsMax);
-  rangeChip('episodes',q.episodesMin,q.episodesMax);
-
-  if(forceUnwatched || q.watched===false) chips.push(`<span class="chip">unwatched</span>`);
-  if(q.watched===true) chips.push(`<span class="chip">watched</span>`);
-  document.getElementById('activeFilters').innerHTML = chips.join('');
-}
-
-let currentFilteredArray = [];
-/* virtualized grid settings */
-const VIRTUAL_THRESHOLD = 120;
-const BATCH = 40;
-let visibleCount = 0;
-let io = null;
-
-function applyFilters(){
-  const q=parseOmni(document.getElementById('omni').value);
-  const forceUnwatched = document.getElementById('chkUnwatched').checked;
-  const sort=document.getElementById('sortSel').value;
-
-  let out = items.filter(it=>{
-    if(forceUnwatched || q.watched===false){ if(it.watched) return false; }
-    if(q.watched===true && !it.watched) return false;
-
-    if(q.type && it.type!==q.type) return false;
-
-    if(!inRange(it.year, q.yearMin, q.yearMax)) return false;
-    const imdb = it.imdb==null ? -Infinity : it.imdb;
-    if(!inRange(imdb, q.imdbMin, q.imdbMax)) return false;
-
-    // NEW numeric fields
-    if(!inRange(it.runtime, q.runtimeMin, q.runtimeMax)) return false;
-    if(!inRange(it.epRuntime, q.epMin, q.epMax)) return false;
-    if(!inRange(it.numSeasons, q.seasonsMin, q.seasonsMax)) return false;
-    if(!inRange(it.numEpisodes, q.episodesMin, q.episodesMax)) return false;
-
-    // NEW list/text fields
-    if(!includesAll([it.director], q.dir)) return false;
-    if(!includesAll(it.cast, q.actor)) return false;
-    if(!includesAll(it.production, q.prod)) return false;
-    if(!includesAll(it.genres, q.genre)) return false;
-    if(!includesAll(it.countries, q.country)) return false;
-    if(!includesAll(it.languages, q.language)) return false;
-    if(!includesAll(it.providers, q.provider)) return false;
-    if(!includesAll(it.networks, q.network)) return false;
-    if(!includesAll([it.certification], q.cert)) return false;
-    if(!includesAll([it.status], q.status)) return false;
-
-    if(q.text.length){
-      const hay = [
-        it.title, it.director, it.status, it.certification,
-        ...(it.cast||[]), ...(it.production||[]), ...(it.networks||[]),
-        ...(it.genres||[]), ...(it.countries||[]), ...(it.languages||[]),
-        ...(it.providers||[])
-      ].filter(Boolean).map(s=>s.toLowerCase());
-      for(const term of q.text){ if(!hay.some(h=>h.includes(term))) return false; }
-    }
-    return true;
-  });
-
-  out.sort((a,b)=>{
-    switch(sort){
-      case 'imdb-desc': return (b.imdb??-1)-(a.imdb??-1);
-      case 'year-desc': return (b.year??0)-(a.year??0);
-      case 'year-asc' : return (a.year??0)-(b.year??0);
-      case 'title-asc': return a.title.localeCompare(b.title);
-      case 'added-desc':return (b.addedAt??0)-(a.addedAt??0);
-      default: return 0;
-    }
-  });
-
-  renderGrid(out);
-  renderActiveFiltersChips(q, forceUnwatched);
-}
-
-
-/* ====================== Poster helpers (responsive + lazy) ================= */
-function posterImgHTML(it, slot='grid'){
-  // Prefer posterPath (TMDb); fallback to posterUrl
-  const p = it.posterPath;
-  if (p) {
-    // sizes tuned for grid (min card 220px), detail hero, or reco thumbs
-    const sizes = slot==='detail'
-      ? '(max-width: 720px) 80vw, 360px'
-      : slot==='reco'
-        ? '72px'
-        : '(max-width: 640px) 45vw, 220px';
-    const w185 = `https://image.tmdb.org/t/p/w185${p}`;
-    const w342 = `https://image.tmdb.org/t/p/w342${p}`;
-    const w500 = `https://image.tmdb.org/t/p/w500${p}`;
-    return `<img
-      src="${w342}"
-      srcset="${w185} 185w, ${w342} 342w, ${w500} 500w"
-      sizes="${sizes}"
-      loading="lazy" decoding="async" alt=""
-      onerror="this.remove()">`;
-  } else if (it.posterUrl) {
-    return `<img src="${escapeHTML(it.posterUrl)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">`;
-  }
-  return '';
-}
-
-/* ====================== Grid / Cards ====================== */
-function cardHTML(it){
-  const chip = `<span class="pill ${it.type==='show'?'show':'movie'}">${it.type||'movie'}</span>`;
-  const poster = posterImgHTML(it, 'grid') || '';
-  const letter = `<span class="letter">${firstLetter(it.title)}</span>`;
-  return `<div class="item" data-id="${it.id}">
-    <div class="poster">${poster}${letter}</div>
-    <div class="titlebar" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
-    <div class="meta"><div class="meta-row">
-      <span class="muted">${it.year??''}</span>
-      ${it.imdb!=null?`<span class="rating">IMDb ${it.imdb}</span>`:''}
-      ${chip}
-    </div></div>
-  </div>`;
-}
-
-function renderGrid(arr){
-  // small lists → normal render; big lists → virtualized
-  if (io) { io.disconnect(); io = null; }
-  const sentinel = document.getElementById('sentinel');
-  if (sentinel) sentinel.remove();
-
-  if (arr.length <= VIRTUAL_THRESHOLD) {
-    list.innerHTML = arr.map(cardHTML).join('') || `<div class="muted">No items yet. Click “＋ Add”.</div>`;
-    return;
-  }
-
-  // virtual start
-  visibleCount = Math.min(60, arr.length);
-  list.innerHTML = arr.slice(0, visibleCount).map(cardHTML).join('');
-  let s = document.createElement('div');
-  s.id = 'sentinel';
-  s.style.height = '1px';
-  list.after(s);
-
-  io = new IntersectionObserver((entries)=>{
-    if (!entries.some(e=>e.isIntersecting)) return;
-    const prev = visibleCount;
-    visibleCount = Math.min(visibleCount + BATCH, currentFilteredArray.length);
-    if (visibleCount > prev) {
-      list.insertAdjacentHTML('beforeend', currentFilteredArray.slice(prev, visibleCount).map(cardHTML).join(''));
-    }
-    if (visibleCount >= currentFilteredArray.length) { io.disconnect(); }
-  });
-  io.observe(s);
-}
-
-/* ====================== Routing / Detail ====================== */
-function showGrid(){ $('#view-grid').style.display='grid'; $('#view-detail').classList.remove('show'); }
-
-function openDetailById(id){
-  const it=items.find(x=>x.id===id); if(!it){ showGrid(); return; }
-  $('#dt-breadcrumb').textContent=`${(it.type==='show')?'Show':'Movie'} › ${it.title}`;
-  $('#dt-title').textContent=it.title;
-  $('#dt-year').textContent=it.year?`(${it.year})`:'';
-  $('#dt-type').textContent=it.type||'movie';
-  $('#dt-imdb').textContent=it.imdb!=null?`IMDb ${it.imdb}`:'';
-  $('#dt-genres').innerHTML=(it.genres||[]).map(g=>`<span class="chip">${escapeHTML(g)}</span>`).join(' ');
-  $('#dt-overview').textContent=it.notes||'—';
-  $('#dt-director').textContent=it.director||'—';
-  $('#dt-cast').textContent=(it.cast||[]).join(', ') || '—';
-  $('#dt-prod').textContent=(it.production||[]).join(', ') || '—';
-  $('#dt-added').textContent=new Date(it.addedAt||Date.now()).toLocaleDateString();
-  $('#dt-status').textContent=it.watched?'Watched':'Unwatched';
-  $('#dt-poster').innerHTML = posterImgHTML(it, 'detail') || firstLetter(it.title);
-
-  // Countries, languages
-  document.getElementById('dt-countries').textContent = (it.countries||[]).join(', ') || '—';
-  document.getElementById('dt-languages').textContent = (it.languages||[]).join(', ') || '—';
-
-  // Runtime / episode runtime
-  const run = it.runtime ? `${it.runtime} min` : null;
-  const erun = it.epRuntime ? `${it.epRuntime} min` : null;
-  document.getElementById('dt-runtime').textContent = run || (it.type==='movie' ? '—' : '');
-  document.getElementById('dt-epRuntime').textContent = erun || (it.type==='show' ? '—' : '');
-
-  // Seasons / episodes
-  const se = (it.numSeasons || it.numEpisodes) ? `${it.numSeasons ?? '—'} / ${it.numEpisodes ?? '—'}` : '—';
-  document.getElementById('dt-seasons').textContent = it.type==='show' ? se : '';
-
-  // Networks / Studios
-  const nets = (it.networks && it.networks.length) ? it.networks : (it.production || []);
-  document.getElementById('dt-networks').textContent = nets.join(', ') || '—';
-
-  // Certification
-  document.getElementById('dt-cert').textContent = it.certification || '—';
-
-  // Dates
-  const air = it.type==='show'
-    ? [it.firstAir, it.lastAir].filter(Boolean).join(' → ')
-    : (it.releaseDate || '');
-  document.getElementById('dt-airdates').textContent = air || '—';
-
-  // Money
-  const money = [fmtMoney(it.budget), fmtMoney(it.revenue)].filter(Boolean).join(' / ');
-  document.getElementById('dt-money').textContent = money || (it.type==='movie' ? '—' : '');
-
-  // Providers
-  const prov = (it.providers||[]).join(', ');
-  document.getElementById('dt-providers').textContent = prov || '—';
-
-  // Homepage link
-  document.getElementById('dt-home').innerHTML = it.homepage
-    ? `<a href="${escapeHTML(it.homepage)}" target="_blank" rel="noopener">Open site ↗</a>`
-    : '—';
-
-  // Trailer link
-  document.getElementById('dt-trailer').innerHTML = it.trailerUrl
-    ? `<a href="${escapeHTML(it.trailerUrl)}" target="_blank" rel="noopener">YouTube trailer ▶</a>`
-    : '—';
-    
-  $('#dt-watch').textContent=it.watched?'Mark Unwatched':'Mark Watched';
-  $('#dt-watch').onclick=async()=>{ it.watched=!it.watched; await updateItem(it); items=await getAll(); applyFilters(); openDetailById(id); };
-  $('#dt-edit').onclick=async()=>{
-    const t=prompt('Title',it.title)??it.title;
-    const y=prompt('Year',it.year??'')??it.year;
-    const d=prompt('Director(s)',it.director??'')??it.director;
-    const r=prompt('IMDb (0–10)',it.imdb??'')??it.imdb;
-    const g=prompt('Genres (comma separated)',(it.genres||[]).join(', '))??(it.genres||[]).join(', ');
-    const n=prompt('Notes',it.notes??'')??it.notes;
-    Object.assign(it,{title:t.trim()||it.title,year:parseInt(y,10)||null,director:(d||'').trim()||null,imdb:(r!==''?parseFloat(r):null),genres:g.split(',').map(s=>s.trim()).filter(Boolean),notes:(n||'').trim()||null});
-    await updateItem(it); items=await getAll(); applyFilters(); openDetailById(id);
-  };
-  $('#dt-del').onclick=async()=>{ if(!confirm(`Delete "${it.title}"?`)) return; await deleteItemById(id); items=await getAll(); location.hash=''; applyFilters(); };
-
-  $('#view-grid').style.display='none'; $('#view-detail').classList.add('show');
-}
-function route(){ const h=location.hash||''; if(h.startsWith('#d-')){ const id=parseInt(h.slice(3),10); if(!isNaN(id)) return openDetailById(id); } showGrid(); }
-window.addEventListener('hashchange', route);
-$('#btnBack').addEventListener('click', ()=>{ if(location.hash.startsWith('#d-')){ history.back(); setTimeout(()=>{ if(location.hash.startsWith('#d-')) location.hash=''; },0); } else { location.hash=''; }});
-
-function fmtMoney(n){
-  if (typeof n !== 'number' || !isFinite(n) || n <= 0) return null;
-  return '$' + n.toLocaleString();
-}
-
-function pickCertification(d, kind){
-  try{
-    if (kind === 'movie') {
-      const arr = d.release_dates?.results || [];
-      const us  = arr.find(x => x.iso_3166_1 === 'US') || arr[0];
-      const rel = us?.release_dates?.find(x => x.certification) || null;
-      return rel?.certification || null;
-    } else {
-      const arr = d.content_ratings?.results || [];
-      const us  = arr.find(x => x.iso_3166_1 === 'US') || arr[0];
-      return us?.rating || null;
-    }
-  }catch{ return null; }
-}
-
-function pickTrailerUrl(d){
-  const vids = d.videos?.results || [];
-  const t = vids.find(v => v.site === 'YouTube' && v.type === 'Trailer') ||
-            vids.find(v => v.site === 'YouTube');
-  return t ? `https://www.youtube.com/watch?v=${t.key}` : null;
-}
-
-function pickProviders(d){
-  // TMDb returns "watch/providers" under this key
-  const prov = d['watch/providers']?.results || {};
-  // Prefer user's region if you want. US fallback:
-  const r = prov.US || prov.GB || Object.values(prov)[0];
-  const names = (r?.flatrate || r?.rent || r?.buy || []).map(x => x.provider_name);
-  return [...new Set(names)];
-}
-
-/* Card click -> detail */
-list.addEventListener('click', e=>{ const card=e.target.closest('.item'); if(!card) return; location.hash=`#d-${parseInt(card.dataset.id,10)}`; });
-
-/* ====================== Import/Export/Clear ====================== */
-$('#btn-export').addEventListener('click',async()=>{
-  const data=await getAll(); const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob);
-  const a=Object.assign(document.createElement('a'),{href:url,download:'watchlist.json'}); document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-});
-$('#file-import').addEventListener('change',async e=>{
-  const f=e.target.files?.[0]; if(!f) return;
-  try{
-    const arr=JSON.parse(await f.text()); if(!Array.isArray(arr)) throw new Error('Invalid file');
-    await deleteAll(); for(const x of arr){ const {id,...rest}=x; await addItem({...rest,addedAt:Date.now()}); }
-    items=await getAll(); applyFilters(); route();
-  }catch(err){ alert('Import failed: '+err.message); } finally{ e.target.value=''; }
-});
-$('#btn-clear').addEventListener('click',async()=>{ if(!confirm('Delete all items?')) return; await deleteAll(); items=[]; applyFilters(); route(); });
-
-/* ====================== Recommendations (drawer) ====================== */
-function computeRecs(scope='unwatched'){
-  const liked = items.filter(x => (x.imdb??0) >= 7);
-  const seed = liked.length ? liked : items;
-  const gFreq=new Map(), dFreq=new Map();
-  seed.forEach(x=>{ (x.genres||[]).forEach(g=>gFreq.set(g,(gFreq.get(g)||0)+1)); if(x.director) dFreq.set(x.director,(dFreq.get(x.director)||0)+1); });
-  function score(it){
-    const gs=(it.genres||[]).reduce((a,g)=>a+(gFreq.get(g)||0),0);
-    const ds=dFreq.get(it.director)||0;
-    const imdb=(it.imdb??0)*0.7;
-    const bonus=it.watched?-3:3;
-    return gs+ds+imdb+bonus;
-  }
-  let pool = items.slice();
-  if(scope==='unwatched') pool = pool.filter(x=>!x.watched);
-  return pool.sort((a,b)=>score(b)-score(a)).slice(0,8);
-}
-function renderRecs(){
-  const scope = document.getElementById('recoScope').value;
-  const recs = computeRecs(scope);
-
-  const html = recs.map(it=>{
-    // Prefer a smaller TMDb variant for the drawer
-    let thumb = '';
-    if (it.posterUrl) {
-      const u = new URL(it.posterUrl, location.href);
-      // if TMDb, force w185 for thumbs
-      if (u.hostname === 'image.tmdb.org') {
-        const parts = u.pathname.split('/');
-        const i = parts.findIndex(s => /^w\d+$/.test(s));
-        if (i >= 0) parts[i] = 'w185';
-        u.pathname = parts.join('/');
-      }
-      thumb = `<img src="${u.toString()}" loading="lazy" decoding="async" alt="">`;
-    }
-
-    return `
-      <div class="reco-item">
-        <div class="reco-poster">${thumb || ''}</div>
-        <div style="min-width:0">
-          <strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            ${escapeHTML(it.title)}
-          </strong>
-          <div class="muted">
-            ${(it.type==='show'?'Show':'Movie')} • ${it.year ?? '—'}
-            ${it.imdb!=null ? ` • IMDb ${it.imdb}` : ''}
+            <!-- actions -->
+            <div class="badges" style="margin-top:4px;gap:8px">
+              <button id="dt-watch" class="btn-sm">Mark Watched</button>
+              <button id="dt-edit"  class="btn-sm">Edit</button>
+              <button id="dt-del"   class="btn-sm">Delete</button>
+            </div>
           </div>
         </div>
-        <div style="margin-left:auto">
-          <button class="btn-ghost" onclick="location.hash='#d-${it.id}'">Open</button>
+      </section>
+    </main>
+
+    <!-- =============================================================
+         RECOMMENDATIONS DRAWER
+         ============================================================= -->
+    <aside id="reco" class="reco-drawer" aria-live="polite">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <strong>Top Picks</strong>
+        <select id="recoScope" style="width:160px">
+          <option value="unwatched">Unwatched</option>
+          <option value="all">All items</option>
+        </select>
+      </div>
+      <div id="recoList" class="list"></div>
+    </aside>
+
+    <!-- =============================================================
+         FAB ADD
+         ============================================================= -->
+    <button id="btnAdd" class="fab">＋ Add</button>
+
+    <!-- =============================================================
+         ADD MODAL
+         ============================================================= -->
+    <div id="modal" class="overlay" aria-hidden="true">
+      <div class="sheet" role="dialog" aria-modal="true">
+        <!-- modal head -->
+        <div class="head">
+          <strong>Add a Title</strong>
+          <button id="closeModal" class="btn-ghost">Close</button>
         </div>
-      </div>`;
-  }).join('') || `<div class="muted">Add a few items to see picks.</div>`;
 
-  document.getElementById('recoList').innerHTML = html;
-}
-
-$('#btnReco').onclick=()=>{ $('#reco').classList.toggle('open'); renderRecs(); };
-$('#recoScope').onchange=renderRecs;
-
-/* ====================== Add Modal (TMDb + Manual) ====================== */
-const modal = $('#modal');
-const tabs  = [...document.querySelectorAll('.tab')];
-
-/* scroll-lock helper */
-const lockScroll = (on) => {
-  const docEl = document.documentElement;
-  if (on) {
-    const needsComp = window.innerWidth > docEl.clientWidth;
-    const comp = needsComp ? (window.innerWidth - docEl.clientWidth) : 0;
-    docEl.style.overflow = 'hidden';
-    if (comp) docEl.style.paddingRight = comp + 'px';
-  } else {
-    docEl.style.overflow = '';
-    docEl.style.paddingRight = '';
-  }
-};
-
-$('#btnAdd').onclick = () => {
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-  lockScroll(true);
-  const q = document.getElementById('tmdb-query');
-  if (q) q.focus();
-};
-$('#closeModal').onclick = () => {
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
-  lockScroll(false);
-};
-modal.addEventListener('click', (e) => { if (e.target === modal) $('#closeModal').click(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) $('#closeModal').click(); });
-tabs.forEach(t => t.addEventListener('click', () => {
-  tabs.forEach(x => x.classList.remove('active'));
-  t.classList.add('active');
-  ['tmdb', 'manual'].forEach(n => document.getElementById('tab-' + n).style.display = (t.dataset.tab === n) ? 'block' : 'none');
-}));
-
-function numOrNull(v){const n=parseFloat(v);return isNaN(n)?null:n;}
-function blankToNull(v){const s=(v||'').trim();return s||null;}
-function normalizeGenres(s){return (s||'').split(',').map(g=>g.trim()).filter(Boolean);}
-
-$('#btn-add').addEventListener('click', async ()=>{
-  const title=$('#in-title').value.trim(); if(!title){ $('#addMsg').textContent='Title is required.'; return; }
-  const it={
-    type: $('#in-type').value, title,
-    year: parseInt($('#in-year').value,10)||null,
-    director: blankToNull($('#in-director').value),
-    imdb: numOrNull($('#in-imdb').value),
-    genres: normalizeGenres($('#in-genres').value),
-    notes: blankToNull($('#in-notes').value),
-    watched: $('#in-watched').checked,
-    imdbId:null, tmdbId:null, posterUrl:null, posterPath:null,
-    cast:[], production:[], countries:[],
-    addedAt: Date.now()
-  };
-  if(existsByIds(it)){ $('#addMsg').textContent='Already in your list ✋'; setTimeout(()=>$('#addMsg').textContent='',1400); return; }
-  await addItem(it); items=await getAll(); applyFilters(); $('#addMsg').textContent='Added ✔'; setTimeout(()=>$('#addMsg').textContent='',1200);
-  ['in-title','in-year','in-director','in-imdb','in-genres','in-notes'].forEach(id=>document.getElementById(id).value=''); $('#in-watched').checked=false; $('#in-type').value='movie';
-});
-
-/* ====================== TMDb / OMDb integration ====================== */
-const TMDB_KEY=(window.APP_KEYS&&window.APP_KEYS.TMDB)||''; const OMDB_KEY=(window.APP_KEYS&&window.APP_KEYS.OMDB)||'';
-const TMDB_API='https://api.themoviedb.org/3';
-if(!TMDB_KEY) console.warn('TMDb API key missing. Add it in env.js');
-
-let tmdbCtrl;
-const debounce = (fn, ms=400) => { let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; };
-
-async function tmdbSearch(query, { signal } = {}){
-  const url=`${TMDB_API}/search/multi?api_key=${encodeURIComponent(TMDB_KEY)}&query=${encodeURIComponent(query)}&include_adult=false`;
-  const r=await fetch(url, { signal }); if(!r.ok) throw new Error('TMDb search failed');
-  const data=await r.json(); return (data.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv').slice(0,10);
-}
-async function tmdbDetails(kind,id){
-  const url= `${TMDB_API}/${kind}/${id}?api_key=${encodeURIComponent(TMDB_KEY)}&append_to_response=credits,external_ids,release_dates,content_ratings,videos,watch/providers`;
-  const r=await fetch(url); if(!r.ok) throw new Error('TMDb details failed'); return r.json();
-}
-    
-async function fetchImdbRating(imdbId){
-  if(!imdbId || !OMDB_KEY) return null;
-  const r=await fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(OMDB_KEY)}&i=${encodeURIComponent(imdbId)}`);
-  if(!r.ok) return null; const d=await r.json(); const val=parseFloat(d.imdbRating); return isNaN(val)?null:val;
-}
-
-async function runTmdbSearch(){
-  const q=$('#tmdb-query').value.trim(); if(!q) return;
-  if (tmdbCtrl) tmdbCtrl.abort();
-  tmdbCtrl = new AbortController();
-  const container=$('#tmdb-results'); container.innerHTML='<div class="muted">Searching…</div>';
-  try{
-    const results=await tmdbSearch(q, { signal: tmdbCtrl.signal });
-    if(!results.length){ container.innerHTML='<div class="muted">No results.</div>'; return; }
-    const img = (path)=> path ? `
-      <img
-        src="https://image.tmdb.org/t/p/w185${path}"
-        srcset="
-          https://image.tmdb.org/t/p/w92${path} 92w,
-          https://image.tmdb.org/t/p/w154${path} 154w,
-          https://image.tmdb.org/t/p/w185${path} 185w"
-        sizes="(max-width: 640px) 25vw, 48px"
-        loading="lazy" decoding="async" alt=""
-        style="width:44px; height:66px; object-fit:cover; border-radius:8px">` : '';
-
-    container.innerHTML = results.map(r=>{
-      const title=r.title||r.name, year=(r.release_date||r.first_air_date||'').slice(0,4);
-      return `<div class="item">
-        <div style="display:flex;gap:10px;align-items:center">
-          ${img(r.poster_path)}
-          <div><strong>${escapeHTML(title)}</strong> ${year?`<small>(${year})</small>`:''}<div class="muted">${r.media_type.toUpperCase()}</div></div>
+        <!-- tabs -->
+        <div class="tabs">
+          <button class="tab active" data-tab="tmdb">Search TMDb</button>
+          <button class="tab" data-tab="manual">Manual</button>
         </div>
-        <button class="btn-ghost" data-import="${r.media_type}:${r.id}">Add</button>
-      </div>`;
-    }).join('');
-    [...container.querySelectorAll('[data-import]')].forEach(b=>{
-      const [k,i]=b.dataset.import.split(':'); const dup=items.some(x=>x.tmdbId===parseInt(i,10)&&x.type===(k==='tv'?'show':'movie')); if(dup){ b.disabled=true; b.textContent='Added'; }
-    });
-  }catch(e){
-    if (e.name !== 'AbortError') container.innerHTML='<div class="muted">Search failed.</div>';
-  }
-}
-$('#btn-tmdb-search').addEventListener('click', runTmdbSearch);
-document.getElementById('tmdb-query').addEventListener('input', debounce(runTmdbSearch, 350));
 
-document.getElementById('tmdb-results').addEventListener('click', async e=>{
-  const btn=e.target.closest('[data-import]'); if(!btn) return;
-  const [kind,idStr]=btn.dataset.import.split(':'), id=parseInt(idStr,10);
-  try{
-    const d=await tmdbDetails(kind,id);
-    // Core people/companies
-    let director = null;
-    if (kind==='movie') {
-      const dir = (d.credits?.crew||[]).find(p=>p.job==='Director');
-      director = dir ? dir.name : null;
-    } else { // tv
-      director = (d.created_by||[]).map(x=>x.name).join(', ') || null;
+        <!-- body -->
+        <div class="body">
+          <!-- TMDb -->
+          <div id="tab-tmdb">
+            <div class="row-2">
+              <input id="tmdb-query" placeholder="Type a title, e.g., Inception" />
+              <button id="btn-tmdb-search">Search</button>
+            </div>
+            <div id="tmdb-results" class="list list-compact" style="margin-top:10px"></div>
+          </div>
+
+          <!-- Manual -->
+          <div id="tab-manual" style="display:none">
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:8px">
+              <input id="in-title" placeholder="Title *" />
+              <select id="in-type">
+                <option value="movie">Movie</option>
+                <option value="show">Show</option>
+              </select>
+              <input id="in-year" type="number" placeholder="Year" />
+              <input id="in-director" placeholder="Director(s)" />
+              <input id="in-imdb" type="number" min="0" max="10" step="0.1" placeholder="IMDb (0–10)" />
+              <input id="in-genres" placeholder="Genres (comma separated)" />
+              <textarea id="in-notes" rows="3" placeholder="Notes (optional)" style="grid-column:1/-1"></textarea>
+            </div>
+
+            <div class="toolbar" style="margin-top:10px;justify-content:flex-end">
+              <label class="muted" style="display:flex;align-items:center;gap:6px">
+                <input id="in-watched" type="checkbox" /> Mark watched
+              </label>
+              <button id="btn-add">Add</button>
+            </div>
+
+            <div id="addMsg" class="muted" style="margin-top:6px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <script src="env.js"></script>
+  <script>
+    /* ===================================================================
+       IndexedDB (Storage Layer)
+       =================================================================== */
+    const DB = 'watchlist-db-v1', STORE = 'items'; let db;
+
+    function openDB() {
+      return new Promise((res, rej) => {
+        const r = indexedDB.open(DB, 1);
+        r.onupgradeneeded = e => {
+          const s = e.target.result.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
+          s.createIndex('addedAt', 'addedAt');
+          s.createIndex('title', 'title');
+          s.createIndex('imdb', 'imdb');
+          s.createIndex('watched', 'watched');
+        };
+        r.onsuccess = () => { db = r.result; res(); };
+        r.onerror = () => rej(r.error);
+      });
     }
-    const cast        = (d.credits?.cast||[]).slice(0,10).map(p=>p.name);
-    //const studios     = (d.production_companies||[]).map(p=>p.name);
-    const production  = (d.production_companies||[]).map(p=>p.name);
-    const networks    = (d.networks||[]).map(n=>n.name);
+    function tx(mode = 'readonly') { return db.transaction(STORE, mode).objectStore(STORE); }
+    const addItem = v => new Promise((res, rej) => { const r = tx('readwrite').add(v); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
+    const updateItem = v => new Promise((res, rej) => { const r = tx('readwrite').put(v); r.onsuccess = () => res(); r.onerror = () => rej(r.error); });
+    const deleteItemById = id => new Promise((res, rej) => { const r = tx('readwrite').delete(id); r.onsuccess = () => res(); r.onerror = () => rej(r.error); });
+    const deleteAll = () => new Promise((res, rej) => { const r = tx('readwrite').clear(); r.onsuccess = () => res(); r.onerror = () => rej(r.error); });
+    const getAll = () => new Promise((res, rej) => { const r = tx().getAll(); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); });
 
-    // Geography / language
-    //const countries=(d.production_countries||[]).map(c=>c.iso_3166_1 || c.name);
-    const countries = [
-      ...(d.production_countries||[]).map(c=>c.iso_3166_1 || c.name),
-      ...(Array.isArray(d.origin_country)? d.origin_country : [])
-    ].filter(Boolean);
-    const languages = (d.spoken_languages||[]).map(l=>l.english_name || l.name || l.iso_639_1);
+    /* ===================================================================
+       State & DOM helpers
+       =================================================================== */
+    let items = [];
+    const $ = sel => document.querySelector(sel);
+    const list = $('#grid-cards');
 
-    // Times
-    const runtime        = d.runtime || null; // minutes (movie)
-    const epRuntime      = Array.isArray(d.episode_run_time) && d.episode_run_time.length ? Math.round(d.episode_run_time.reduce((a,b)=>a+b)/d.episode_run_time.length) : null;
-    const numSeasons     = d.number_of_seasons ?? null;
-    const numEpisodes    = d.number_of_episodes ?? null;
+    function escapeHTML(s) { return (s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function norm(s) { return (s ?? '').trim().toLowerCase().replace(/\s+/g, ' '); }
+    function firstLetter(s) { return (s || '?').trim().charAt(0).toUpperCase() || '?'; }
+    function keyTitleYear(it) { return `${norm(it.title)}|${it.year ?? ''}`; }
+    function existsByIds(c) {
+      const imdb = norm(c.imdbId), tmdb = c.tmdbId ?? null, key = keyTitleYear(c);
+      return items.some(x => (imdb && norm(x.imdbId) === imdb) || (tmdb && x.tmdbId === tmdb) || keyTitleYear(x) === key);
+    }
 
-    // Status / dates
-    const status      = d.status || null;
-    const releaseDate = d.release_date || null;
-    const firstAir    = d.first_air_date || null;
-    const lastAir     = d.last_air_date || null;
+    // Comma list where each name never breaks mid-word
+    function formatListNoWrap(arr) {
+      if (!Array.isArray(arr) || arr.length === 0) return '—';
+      return arr.map(n => `<span class="name">${escapeHTML(String(n))}</span>`).join(', ');
+    }
 
-    // Media / ids
-    //const posterUrl = d.poster_path ? `${TMDB_IMG}${d.poster_path}` : null;
-    const posterPath=d.poster_path||null;
-    const posterUrl = posterPath ? `https://image.tmdb.org/t/p/w342${posterPath}` : null;
-    const imdbId    = d.external_ids?.imdb_id || null;
-    const imdb      = (await fetchImdbRating(imdbId)) ?? (typeof d.vote_average==='number' ? Math.round(d.vote_average*10)/10 : null);
-    
-    // Extras
-    const certification = pickCertification(d, kind==='tv' ? 'tv' : 'movie');
-    const budget        = d.budget ?? null;
-    const revenue       = d.revenue ?? null;
-    const homepage      = d.homepage || null;
-    const trailerUrl    = pickTrailerUrl(d);
-    const providers     = pickProviders(d);
-    
-    const item={
-      type: kind==='tv'?'show':'movie',
-      title: d.title||d.name,
-      year: parseInt((d.release_date||d.first_air_date||'').slice(0,4),10)||null,
-      director,
-      imdb,
-      genres:(d.genres||[]).map(g=>g.name),
-      notes: d.overview || null,
-      posterUrl, posterPath, watched:false, imdbId, tmdbId:d.id, addedAt: Date.now(),
-      
-      // NEW fields
-      cast, production, networks,
-      countries, languages,
-      runtime, epRuntime, numSeasons, numEpisodes,
-      status, releaseDate, firstAir, lastAir,
-      certification, budget, revenue,
-      homepage, trailerUrl, providers
+    // Safe setter
+    function setHTML(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+
+    // Ensure small CSS hook for nowrap in detail view
+    (function ensureDetailCSS() {
+      if (document.getElementById('detail-nowrap-css')) return;
+      const style = document.createElement('style');
+      style.id = 'detail-nowrap-css';
+      style.textContent = `.rowtext .nowrap{ white-space: nowrap; }`;
+      document.head.appendChild(style);
+    })();
+
+    /* ===================================================================
+       Routing & Back button
+       =================================================================== */
+    function route() {
+      const h = location.hash || '';
+      if (h.startsWith('#d-')) {
+        const id = parseInt(h.slice(3), 10);
+        if (!isNaN(id)) return openDetailById(id);
+      }
+      showGrid();
+    }
+    window.addEventListener('hashchange', route);
+    $('#btnBack').addEventListener('click', () => {
+      if (location.hash.startsWith('#d-')) {
+        history.back();
+        setTimeout(() => { if (location.hash.startsWith('#d-')) location.hash = ''; }, 0);
+      } else {
+        location.hash = '';
+      }
+    });
+
+    /* ===================================================================
+       Data pickers / formatters (TMDb helpers)
+       =================================================================== */
+    function fmtMoney(n) { if (typeof n !== 'number' || !isFinite(n) || n <= 0) return null; return '$' + n.toLocaleString(); }
+
+    function pickCertification(d, kind) {
+      try {
+        if (kind === 'movie') {
+          const arr = d.release_dates?.results || [];
+          const us = arr.find(x => x.iso_3166_1 === 'US') || arr[0];
+          const rel = us?.release_dates?.find(x => x.certification) || null;
+          return rel?.certification || null;
+        } else {
+          const arr = d.content_ratings?.results || [];
+          const us = arr.find(x => x.iso_3166_1 === 'US') || arr[0];
+          return us?.rating || null;
+        }
+      } catch { return null; }
+    }
+
+    function pickTrailerUrl(d) {
+      const vids = d.videos?.results || [];
+      const t = vids.find(v => v.site === 'YouTube' && v.type === 'Trailer') || vids.find(v => v.site === 'YouTube');
+      return t ? `https://www.youtube.com/watch?v=${t.key}` : null;
+    }
+
+    function pickProviders(d) {
+      // TMDb returns "watch/providers" under this key
+      const prov = d['watch/providers']?.results || {};
+      const r = prov.US || prov.GB || Object.values(prov)[0];
+      const names = (r?.flatrate || r?.rent || r?.buy || []).map(x => x.provider_name);
+      return [...new Set(names)];
+    }
+
+    function pickRegion() {
+      const m = (navigator.language || 'en-US').match(/-([A-Z]{2})$/);
+      return m ? m[1] : 'US';
+    }
+    function pickWatchInfo(d) {
+      const table = d['watch/providers']?.results || {};
+      const region = pickRegion();
+      const block = table[region] || table.US || table.GB || Object.values(table)[0];
+      const link = block?.link || null;
+      const names = [
+        ...((block?.flatrate) || []),
+        ...((block?.rent) || []),
+        ...((block?.buy) || [])
+      ].map(p => p.provider_name);
+      return { names: [...new Set(names)], link };
+    }
+
+    /* ===================================================================
+       Omnibox parser
+       =================================================================== */
+    function tokenize(q) { const out = []; (q || '').replace(/"([^"]+)"|(\S+)/g, (_, a, b) => out.push(a || b)); return out; }
+
+    function parseOmni(q) {
+      const tks = tokenize((q || '').trim());
+      const res = {
+        text: [],
+        dir: [], actor: [], prod: [], genre: [], country: [],
+        language: [], provider: [], network: [], cert: [], status: [],
+        type: null,
+        yearMin: null, yearMax: null,
+        imdbMin: null, imdbMax: null,
+        runtimeMin: null, runtimeMax: null,
+        epMin: null, epMax: null,
+        seasonsMin: null, seasonsMax: null,
+        episodesMin: null, episodesMax: null,
+        watched: null
+      };
+
+      const add = (k, v) => { if (v) res[k].push(v.toLowerCase()); };
+      const asNum = s => { const n = parseFloat(s); return isNaN(n) ? null : n; };
+
+      const kmap = {
+        director: 'dir', dir: 'dir',
+        actor: 'actor', cast: 'actor',
+        prod: 'prod', production: 'prod', studio: 'prod',
+        genre: 'genre', g: 'genre',
+        country: 'country', c: 'country',
+        language: 'language', lang: 'language', l: 'language',
+        provider: 'provider', prov: 'provider', platform: 'provider', service: 'provider',
+        network: 'network', net: 'network',
+        type: 'type', t: 'type',
+        imdb: 'imdb', rating: 'imdb',
+        year: 'year', y: 'year',
+        runtime: 'runtime', rt: 'runtime', duration: 'runtime',
+        epruntime: 'ep', eruntime: 'ep', ep: 'ep',
+        seasons: 'seasons', s: 'seasons',
+        episodes: 'episodes', e: 'episodes',
+        cert: 'cert', certification: 'cert',
+        status: 'status',
+        watched: 'watched'
+      };
+
+      function parseNumeric(key, val) {
+        const range = val.match(/^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/);
+        const gte = val.match(/^>=\s*([0-9.]+)$/);
+        const lte = val.match(/^<=\s*([0-9.]+)$/);
+        const gt  = val.match(/^>\s*([0-9.]+)$/);
+        const lt  = val.match(/^<\s*([0-9.]+)$/);
+        const eq  = val.match(/^=\s*([0-9.]+)$/) || val.match(/^([0-9.]+)$/);
+        const set = (lo, hi, minK, maxK) => { res[minK] = lo; res[maxK] = hi; };
+
+        switch (key) {
+          case 'year':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'yearMin','yearMax'); }
+            else if (gte) { res.yearMin = asNum(gte[1]); }
+            else if (lte) { res.yearMax = asNum(lte[1]); }
+            else if (gt)  { const n = asNum(gt[1]); res.yearMin = n != null ? n + 1 : null; }
+            else if (lt)  { const n = asNum(lt[1]); res.yearMax = n != null ? n - 1 : null; }
+            else if (eq)  { const n = asNum(eq[1]); res.yearMin = n; res.yearMax = n; }
+            return true;
+
+          case 'imdb':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'imdbMin','imdbMax'); }
+            else if (gte) { res.imdbMin = asNum(gte[1]); }
+            else if (lte) { res.imdbMax = asNum(lte[1]); }
+            else if (gt)  { res.imdbMin = asNum(gt[1]); }
+            else if (lt)  { res.imdbMax = asNum(lt[1]); }
+            else if (eq)  { const n = asNum(eq[1]); res.imdbMin = n; res.imdbMax = n; }
+            return true;
+
+          case 'runtime':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'runtimeMin','runtimeMax'); }
+            else if (gte) { res.runtimeMin = asNum(gte[1]); }
+            else if (lte) { res.runtimeMax = asNum(lte[1]); }
+            else if (gt)  { res.runtimeMin = asNum(gt[1]) + 1; }
+            else if (lt)  { res.runtimeMax = asNum(lt[1]) - 1; }
+            else if (eq)  { const n = asNum(eq[1]); res.runtimeMin = n; res.runtimeMax = n; }
+            return true;
+
+          case 'ep':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'epMin','epMax'); }
+            else if (gte) { res.epMin = asNum(gte[1]); }
+            else if (lte) { res.epMax = asNum(lte[1]); }
+            else if (gt)  { res.epMin = asNum(gt[1]) + 1; }
+            else if (lt)  { res.epMax = asNum(lt[1]) - 1; }
+            else if (eq)  { const n = asNum(eq[1]); res.epMin = n; res.epMax = n; }
+            return true;
+
+          case 'seasons':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'seasonsMin','seasonsMax'); }
+            else if (gte) { res.seasonsMin = asNum(gte[1]); }
+            else if (lte) { res.seasonsMax = asNum(lte[1]); }
+            else if (gt)  { res.seasonsMin = asNum(gt[1]) + 1; }
+            else if (lt)  { res.seasonsMax = asNum(lt[1]) - 1; }
+            else if (eq)  { const n = asNum(eq[1]); res.seasonsMin = n; res.seasonsMax = n; }
+            return true;
+
+          case 'episodes':
+            if (range) { set(asNum(range[1]), asNum(range[2]), 'episodesMin','episodesMax'); }
+            else if (gte) { res.episodesMin = asNum(gte[1]); }
+            else if (lte) { res.episodesMax = asNum(lte[1]); }
+            else if (gt)  { res.episodesMin = asNum(gt[1]) + 1; }
+            else if (lt)  { res.episodesMax = asNum(lt[1]) - 1; }
+            else if (eq)  { const n = asNum(eq[1]); res.episodesMin = n; res.episodesMax = n; }
+            return true;
+        }
+        return false;
+      }
+
+      for (const tk of tks) {
+        const m = tk.match(/^(\w+):(.*)$/);
+        if (!m) {
+          const w = tk.toLowerCase();
+          if (w === 'unwatched') res.watched = false; else
+          if (w === 'watched')   res.watched = true;  else
+          res.text.push(w);
+          continue;
+        }
+
+        const rawKey = m[1].toLowerCase();
+        const key    = kmap[rawKey] || rawKey;
+        let   val    = m[2];
+
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) val = val.slice(1, -1);
+
+        if (key === 'type') {
+          const v = val.toLowerCase(); res.type = v.startsWith('s') ? 'show' : v.startsWith('m') ? 'movie' : null; continue;
+        }
+        if (key === 'watched') {
+          const v = val.toLowerCase(); res.watched = (v === '1' || v === 'true' || v.startsWith('y')); continue;
+        }
+
+        if (['year','imdb','runtime','ep','seasons','episodes'].includes(key)) { parseNumeric(key, val); continue; }
+
+        if (key === 'dir') add('dir', val);
+        else if (key === 'actor') add('actor', val);
+        else if (key === 'prod') add('prod', val);
+        else if (key === 'genre') add('genre', val);
+        else if (key === 'country') add('country', val);
+        else if (key === 'language') add('language', val);
+        else if (key === 'provider') add('provider', val);
+        else if (key === 'network') add('network', val);
+        else if (key === 'cert') add('cert', val);
+        else if (key === 'status') add('status', val);
+        else res.text.push(`${key}:${val}`.toLowerCase());
+      }
+      return res;
+    }
+
+    function inRange(val, min, max) {
+      if (val == null) val = -Infinity; // treat missing as very small
+      if (min != null && val < min) return false;
+      if (max != null && val > max) return false;
+      return true;
+    }
+    function includesAll(hayArr, needles) {
+      if (!needles.length) return true;
+      const H = (hayArr || []).map(s => (s || '').toLowerCase());
+      return needles.every(n => H.some(h => h.includes(n)));
+    }
+
+    /* ===================================================================
+       Filters & Rendering chips
+       =================================================================== */
+    function renderActiveFiltersChips(q, forceUnwatched) {
+      const chips = [];
+      const push = (l, vals) => vals.forEach(v => chips.push(`<span class="chip">${l}:${escapeHTML(v)}</span>`));
+
+      q.text.forEach(t => chips.push(`<span class="chip">${escapeHTML(t)}</span>`));
+      push('dir', q.dir); push('actor', q.actor); push('prod', q.prod);
+      push('genre', q.genre); push('country', q.country);
+      push('lang', q.language); push('provider', q.provider); push('network', q.network);
+      push('cert', q.cert); push('status', q.status);
+      if (q.type) chips.push(`<span class="chip">type:${escapeHTML(q.type)}</span>`);
+
+      const rangeChip = (k, min, max) => { if (min != null || max != null) chips.push(`<span class="chip">${k}:${min ?? ''}-${max ?? ''}</span>`); };
+      rangeChip('year', q.yearMin, q.yearMax);
+      rangeChip('imdb', q.imdbMin, q.imdbMax);
+      rangeChip('rt', q.runtimeMin, q.runtimeMax);
+      rangeChip('ep', q.epMin, q.epMax);
+      rangeChip('seasons', q.seasonsMin, q.seasonsMax);
+      rangeChip('episodes', q.episodesMin, q.episodesMax);
+
+      if (forceUnwatched || q.watched === false) chips.push(`<span class="chip">unwatched</span>`);
+      if (q.watched === true) chips.push(`<span class="chip">watched</span>`);
+      document.getElementById('activeFilters').innerHTML = chips.join('');
+    }
+
+    let currentFilteredArray = [];
+    const VIRTUAL_THRESHOLD = 120;
+    const BATCH = 40;
+    let visibleCount = 0;
+    let io = null;
+
+    function applyFilters() {
+      const q = parseOmni(document.getElementById('omni').value);
+      const forceUnwatched = document.getElementById('chkUnwatched').checked;
+      const sort = document.getElementById('sortSel').value;
+
+      let out = items.filter(it => {
+        if (forceUnwatched || q.watched === false) { if (it.watched) return false; }
+        if (q.watched === true && !it.watched) return false;
+
+        if (q.type && it.type !== q.type) return false;
+
+        if (!inRange(it.year, q.yearMin, q.yearMax)) return false;
+        const imdb = it.imdb == null ? -Infinity : it.imdb;
+        if (!inRange(imdb, q.imdbMin, q.imdbMax)) return false;
+
+        if (!inRange(it.runtime, q.runtimeMin, q.runtimeMax)) return false;
+        if (!inRange(it.epRuntime, q.epMin, q.epMax)) return false;
+        if (!inRange(it.numSeasons, q.seasonsMin, q.seasonsMax)) return false;
+        if (!inRange(it.numEpisodes, q.episodesMin, q.episodesMax)) return false;
+
+        if (!includesAll([it.director], q.dir)) return false;
+        if (!includesAll(it.cast, q.actor)) return false;
+        if (!includesAll(it.production, q.prod)) return false;
+        if (!includesAll(it.genres, q.genre)) return false;
+        if (!includesAll(it.countries, q.country)) return false;
+        if (!includesAll(it.languages, q.language)) return false;
+        if (!includesAll(it.providers, q.provider)) return false;
+        if (!includesAll(it.networks, q.network)) return false;
+        if (!includesAll([it.certification], q.cert)) return false;
+        if (!includesAll([it.status], q.status)) return false;
+
+        if (q.text.length) {
+          const hay = [
+            it.title, it.director, it.status, it.certification,
+            ...(it.cast || []), ...(it.production || []), ...(it.networks || []),
+            ...(it.genres || []), ...(it.countries || []), ...(it.languages || []),
+            ...(it.providers || [])
+          ].filter(Boolean).map(s => s.toLowerCase());
+          for (const term of q.text) { if (!hay.some(h => h.includes(term))) return false; }
+        }
+        return true;
+      });
+
+      out.sort((a, b) => {
+        switch (sort) {
+          case 'imdb-desc': return (b.imdb ?? -1) - (a.imdb ?? -1);
+          case 'year-desc': return (b.year ?? 0) - (a.year ?? 0);
+          case 'year-asc' : return (a.year ?? 0) - (b.year ?? 0);
+          case 'title-asc': return a.title.localeCompare(b.title);
+          case 'added-desc':return (b.addedAt ?? 0) - (a.addedAt ?? 0);
+          default: return 0;
+        }
+      });
+
+      renderGrid(out);
+      renderActiveFiltersChips(q, forceUnwatched);
+    }
+
+    /* ===================================================================
+       Poster helpers (responsive + lazy)
+       =================================================================== */
+    function posterImgHTML(it, slot = 'grid') {
+      const p = it.posterPath;
+      if (p) {
+        const sizes = slot === 'detail'
+          ? '(max-width: 720px) 80vw, 360px'
+          : slot === 'reco'
+            ? '72px'
+            : '(max-width: 640px) 45vw, 220px';
+        const w185 = `https://image.tmdb.org/t/p/w185${p}`;
+        const w342 = `https://image.tmdb.org/t/p/w342${p}`;
+        const w500 = `https://image.tmdb.org/t/p/w500${p}`;
+        return `<img
+          src="${w342}"
+          srcset="${w185} 185w, ${w342} 342w, ${w500} 500w"
+          sizes="${sizes}"
+          loading="lazy" decoding="async" alt=""
+          onerror="this.remove()">`;
+      } else if (it.posterUrl) {
+        return `<img src="${escapeHTML(it.posterUrl)}" loading="lazy" decoding="async" alt="" onerror="this.remove()">`;
+      }
+      return '';
+    }
+
+    /* ===================================================================
+       Grid / Cards (incl. virtualization)
+       =================================================================== */
+    function cardHTML(it) {
+      const chip = `<span class="pill ${it.type === 'show' ? 'show' : 'movie'}">${it.type || 'movie'}</span>`;
+      const poster = posterImgHTML(it, 'grid') || '';
+      const letter = `<span class="letter">${firstLetter(it.title)}</span>`;
+      return `<div class="item" data-id="${it.id}">
+        <div class="poster">${poster}${letter}</div>
+        <div class="titlebar" title="${escapeHTML(it.title)}">${escapeHTML(it.title)}</div>
+        <div class="meta"><div class="meta-row">
+          <span class="muted">${it.year ?? ''}</span>
+          ${it.imdb != null ? `<span class="rating">IMDb ${it.imdb}</span>` : ''}
+          ${chip}
+        </div></div>
+      </div>`;
+    }
+
+    function renderGrid(arr) {
+      if (io) { io.disconnect(); io = null; }
+      const sentinel = document.getElementById('sentinel');
+      if (sentinel) sentinel.remove();
+
+      if (arr.length <= VIRTUAL_THRESHOLD) {
+        list.innerHTML = arr.map(cardHTML).join('') || `<div class="muted">No items yet. Click “＋ Add”.</div>`;
+        return;
+      }
+
+      // virtual start
+      visibleCount = Math.min(60, arr.length);
+      list.innerHTML = arr.slice(0, visibleCount).map(cardHTML).join('');
+      let s = document.createElement('div');
+      s.id = 'sentinel';
+      s.style.height = '1px';
+      list.after(s);
+
+      io = new IntersectionObserver((entries) => {
+        if (!entries.some(e => e.isIntersecting)) return;
+        const prev = visibleCount;
+        visibleCount = Math.min(visibleCount + BATCH, currentFilteredArray.length);
+        if (visibleCount > prev) {
+          list.insertAdjacentHTML('beforeend', currentFilteredArray.slice(prev, visibleCount).map(cardHTML).join(''));
+        }
+        if (visibleCount >= currentFilteredArray.length) { io.disconnect(); }
+      });
+      io.observe(s);
+    }
+
+    /* ===================================================================
+       Routing / Detail view
+       =================================================================== */
+    function showGrid() { $('#view-grid').style.display = 'grid'; $('#view-detail').classList.remove('show'); }
+
+    function chipify(arr) { return (arr || []).map(x => `<span class="chip">${escapeHTML(x)}</span>`).join(' '); }
+    function comma(arr) { return (arr || []).join(', '); }
+
+    function openDetailById(id) {
+      const it = items.find(x => x.id === id);
+      if (!it) { showGrid(); return; }
+
+      // Title & crumb
+      document.getElementById('dt-breadcrumb').textContent = `${(it.type === 'show' ? 'Show' : 'Movie')} › ${it.title}`;
+      document.getElementById('dt-title').textContent = it.title;
+      document.getElementById('dt-year').textContent  = it.year ? `(${it.year})` : '';
+
+      // Poster
+      document.getElementById('dt-poster').innerHTML =
+        it.posterUrl
+          ? `<img src="${escapeHTML(it.posterUrl)}" loading="lazy" decoding="async" alt="">`
+          : firstLetter(it.title);
+
+      // Badges row
+      const badges = [];
+      badges.push(`<span class="badge">${escapeHTML(it.type || 'movie')}</span>`);
+      if (it.imdb != null) badges.push(`<span class="badge imdb">IMDb ${it.imdb}</span>`);
+      if (it.certification) badges.push(`<span class="badge">${escapeHTML(it.certification)}</span>`);
+      if (it.runtime) badges.push(`<span class="badge">${it.runtime} min</span>`);
+      if (it.numSeasons) badges.push(`<span class="badge">${it.numSeasons} season${it.numSeasons > 1 ? 's' : ''}</span>`);
+      if (it.numEpisodes) badges.push(`<span class="badge">${it.numEpisodes} ep</span>`);
+      badges.push(`<span class="badge status--${it.watched ? 'watched' : 'unwathed'}">${it.watched ? 'Watched' : 'Unwatched'}</span>`);
+      document.getElementById('dt-badges').innerHTML = badges.join(' ');
+
+      // Genres
+      document.getElementById('dt-genres').innerHTML = chipify(it.genres);
+
+      // Overview
+      const ov = document.getElementById('dt-overview');
+      ov.textContent = it.notes || '—';
+
+      // Credits
+      const hasDirector = !!it.director;
+      const hasCast = (it.cast || []).length;
+      document.getElementById('dt-director').textContent = it.director || '—';
+      document.getElementById('dt-status').textContent   = it.status || (it.watched ? 'Watched' : 'Unwatched');
+      if (hasCast) {
+        setHTML('dt-cast', formatListNoWrap(it.cast.slice(0, 20)));
+        document.getElementById('wrap-cast').style.display = '';
+      } else {
+        document.getElementById('wrap-cast').style.display = 'none';
+      }
+      document.getElementById('sec-credits').style.display = (hasDirector || hasCast) ? '' : 'none';
+
+      // Stats
+      const stats = [];
+      if (it.runtime)     stats.push(`<div class="kv"><b>Runtime</b> <span>${it.runtime} min</span></div>`);
+      if (it.epRuntime)   stats.push(`<div class="kv"><b>Ep runtime</b> <span>${it.epRuntime} min</span></div>`);
+      if (it.numSeasons)  stats.push(`<div class="kv"><b>Seasons</b> <span>${it.numSeasons}</span></div>`);
+      if (it.numEpisodes) stats.push(`<div class="kv"><b>Episodes</b> <span>${it.numEpisodes}</span></div>`);
+      if (it.releaseDate) stats.push(`<div class="kv"><b>Released</b> <span>${escapeHTML(it.releaseDate)}</span></div>`);
+      const lastAir = it.lastAirDate || it.lastAir;
+      if (lastAir)        stats.push(`<div class="kv"><b>Last air</b> <span>${escapeHTML(lastAir)}</span></div>`);
+      document.getElementById('dt-stats').innerHTML = stats.join('');
+      document.getElementById('sec-stats').style.display = stats.length ? '' : 'none';
+
+      // Production / origin (plain text)
+      const hasProd = (it.production || []).length;
+      const hasNet  = (it.networks  || []).length;
+      const hasProv = (it.providers || []).length;
+      const hasCty  = (it.countries || []).length;
+      const hasLang = (it.languages || []).length;
+
+      if (hasProd){  setHTML('dt-prod', formatListNoWrap(it.production)); document.getElementById('kv-prod').style.display=''; } else document.getElementById('kv-prod').style.display='none';
+      if (hasNet){   setHTML('dt-net',  formatListNoWrap(it.networks));   document.getElementById('kv-net').style.display=''; } else document.getElementById('kv-net').style.display='none';
+      if (hasProv){  setHTML('dt-prov', formatListNoWrap(it.providers));  document.getElementById('kv-prov').style.display=''; } else document.getElementById('kv-prov').style.display='none';
+      if (hasCty){   setHTML('dt-cty',  formatListNoWrap(it.countries));  document.getElementById('kv-cty').style.display=''; } else document.getElementById('kv-cty').style.display='none';
+      if (hasLang){  setHTML('dt-lang', formatListNoWrap(it.languages));  document.getElementById('kv-lang').style.display=''; } else document.getElementById('kv-lang').style.display='none';
+      document.getElementById('dt-added').textContent = new Date(it.addedAt || Date.now()).toLocaleDateString();
+      document.getElementById('sec-production').style.display = (hasProd || hasNet || hasProv || hasCty || hasLang) ? '' : 'none';
+
+      // External links
+      const links = [];
+      if (it.imdbId)   links.push(`<a class="btn-sm" href="https://www.imdb.com/title/${encodeURIComponent(it.imdbId)}/" target="_blank" rel="noopener">IMDb</a>`);
+      if (it.tmdbId)   links.push(`<a class="btn-sm" href="https://www.themoviedb.org/${it.type === 'show' ? 'tv' : 'movie'}/${encodeURIComponent(it.tmdbId)}" target="_blank" rel="noopener">TMDb</a>`);
+      if (it.trailerUrl) links.push(`<a class="btn-sm" href="${escapeHTML(it.trailerUrl)}" target="_blank" rel="noopener">Trailer</a>`);
+      if (it.homepage)   links.push(`<a class="btn-sm" href="${escapeHTML(it.homepage)}" target="_blank" rel="noopener">Official site</a>`);
+      if (it.watchLink)  links.push(`<a class="btn-sm" href="${escapeHTML(it.watchLink)}" target="_blank" rel="noopener">Where to watch</a>`);
+      document.getElementById('dt-links').innerHTML = links.join(' ');
+      document.getElementById('sec-links').style.display = links.length ? '' : 'none';
+
+      // Actions
+      const watchBtn = document.getElementById('dt-watch');
+      watchBtn.textContent = it.watched ? 'Mark Unwatched' : 'Mark Watched';
+      watchBtn.onclick = async () => {
+        it.watched = !it.watched;
+        await updateItem(it);
+        items = await getAll();
+        applyFilters();
+        openDetailById(id);
+      };
+      document.getElementById('dt-edit').onclick = async () => {
+        const t = prompt('Title', it.title) ?? it.title;
+        const y = prompt('Year', it.year ?? '') ?? it.year;
+        const d = prompt('Director(s)', it.director ?? '') ?? it.director;
+        const r = prompt('IMDb (0–10)', it.imdb ?? '') ?? it.imdb;
+        const g = prompt('Genres (comma separated)', (it.genres || []).join(', ')) ?? (it.genres || []).join(', ');
+        const n = prompt('Notes', it.notes ?? '') ?? it.notes;
+        Object.assign(it, {
+          title: t.trim() || it.title,
+          year: parseInt(y, 10) || null,
+          director: (d || '').trim() || null,
+          imdb: (r !== '' ? parseFloat(r) : null),
+          genres: (g || '').split(',').map(s => s.trim()).filter(Boolean),
+          notes: (n || '').trim() || null
+        });
+        await updateItem(it); items = await getAll(); applyFilters(); openDetailById(id);
+      };
+      document.getElementById('dt-del').onclick = async () => {
+        if (!confirm(`Delete "${it.title}"?`)) return;
+        await deleteItemById(id);
+        items = await getAll();
+        location.hash = '';
+        applyFilters();
+      };
+
+      // Show page
+      document.getElementById('view-grid').style.display = 'none';
+      document.getElementById('view-detail').classList.add('show');
+    }
+
+    // Card click → open detail route
+    list.addEventListener('click', e => { const card = e.target.closest('.item'); if (!card) return; location.hash = `#d-${parseInt(card.dataset.id, 10)}`; });
+
+    /* ===================================================================
+       Import / Export / Clear
+       =================================================================== */
+    $('#btn-export').addEventListener('click', async () => {
+      const data = await getAll();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = Object.assign(document.createElement('a'), { href: url, download: 'watchlist.json' });
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+
+    $('#file-import').addEventListener('change', async e => {
+      const f = e.target.files?.[0]; if (!f) return;
+      try {
+        const arr = JSON.parse(await f.text()); if (!Array.isArray(arr)) throw new Error('Invalid file');
+        await deleteAll(); for (const x of arr) { const { id, ...rest } = x; await addItem({ ...rest, addedAt: Date.now() }); }
+        items = await getAll(); applyFilters(); route();
+      } catch (err) { alert('Import failed: ' + err.message); }
+      finally { e.target.value = ''; }
+    });
+
+    $('#btn-clear').addEventListener('click', async () => {
+      if (!confirm('Delete all items?')) return;
+      await deleteAll(); items = []; applyFilters(); route();
+    });
+
+    /* ===================================================================
+       Recommendations (drawer)
+       =================================================================== */
+    function computeRecs(scope = 'unwatched') {
+      const liked = items.filter(x => (x.imdb ?? 0) >= 7);
+      const seed = liked.length ? liked : items;
+      const gFreq = new Map(), dFreq = new Map();
+      seed.forEach(x => {
+        (x.genres || []).forEach(g => gFreq.set(g, (gFreq.get(g) || 0) + 1));
+        if (x.director) dFreq.set(x.director, (dFreq.get(x.director) || 0) + 1);
+      });
+      function score(it) {
+        const gs = (it.genres || []).reduce((a, g) => a + (gFreq.get(g) || 0), 0);
+        const ds = dFreq.get(it.director) || 0;
+        const imdb = (it.imdb ?? 0) * 0.7;
+        const bonus = it.watched ? -3 : 3;
+        return gs + ds + imdb + bonus;
+      }
+      let pool = items.slice();
+      if (scope === 'unwatched') pool = pool.filter(x => !x.watched);
+      return pool.sort((a, b) => score(b) - score(a)).slice(0, 8);
+    }
+
+    function renderRecs() {
+      const scope = document.getElementById('recoScope').value;
+      const recs = computeRecs(scope);
+
+      const html = recs.map(it => {
+        let thumb = '';
+        if (it.posterUrl) {
+          const u = new URL(it.posterUrl, location.href);
+          if (u.hostname === 'image.tmdb.org') {
+            const parts = u.pathname.split('/');
+            const i = parts.findIndex(s => /^w\d+$/.test(s));
+            if (i >= 0) parts[i] = 'w185';
+            u.pathname = parts.join('/');
+          }
+          thumb = `<img src="${u.toString()}" loading="lazy" decoding="async" alt="">`;
+        }
+
+        return `
+          <div class="reco-item">
+            <div class="reco-poster">${thumb || ''}</div>
+            <div style="min-width:0">
+              <strong style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                ${escapeHTML(it.title)}
+              </strong>
+              <div class="muted">
+                ${(it.type === 'show' ? 'Show' : 'Movie')} • ${it.year ?? '—'}
+                ${it.imdb != null ? ` • IMDb ${it.imdb}` : ''}
+              </div>
+            </div>
+            <div style="margin-left:auto">
+              <button class="btn-ghost" onclick="location.hash='#d-${it.id}'">Open</button>
+            </div>
+          </div>`;
+      }).join('') || `<div class="muted">Add a few items to see picks.</div>`;
+
+      document.getElementById('recoList').innerHTML = html;
+    }
+
+    $('#btnReco').onclick = () => { $('#reco').classList.toggle('open'); renderRecs(); };
+    $('#recoScope').onchange = renderRecs;
+
+    /* ===================================================================
+       Add Modal (TMDb + Manual)
+       =================================================================== */
+    const modal = $('#modal');
+    const tabs  = [...document.querySelectorAll('.tab')];
+
+    // Scroll lock helper for modal
+    const lockScroll = (on) => {
+      const docEl = document.documentElement;
+      if (on) {
+        const needsComp = window.innerWidth > docEl.clientWidth;
+        const comp = needsComp ? (window.innerWidth - docEl.clientWidth) : 0;
+        docEl.style.overflow = 'hidden';
+        if (comp) docEl.style.paddingRight = comp + 'px';
+      } else {
+        docEl.style.overflow = '';
+        docEl.style.paddingRight = '';
+      }
     };
-    if(existsByIds(item)){ alert('Already in your list.'); return; }
-    await addItem(item);
-    items = await getAll();
-    applyFilters();
-    document.getElementById('addMsg').textContent='Added from TMDb ✔'; setTimeout(()=>document.getElementById('addMsg').textContent='',1200);
-  }catch(err){ alert('Import failed: '+err.message); }
-});
 
-/* ====================== Bind inputs ====================== */
-document.getElementById('omni').addEventListener('input', applyFilters);
-document.getElementById('sortSel').addEventListener('change', applyFilters);
-document.getElementById('chkUnwatched').addEventListener('change', applyFilters);
+    $('#btnAdd').onclick = () => {
+      modal.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      lockScroll(true);
+      const q = document.getElementById('tmdb-query');
+      if (q) q.focus();
+    };
+    $('#closeModal').onclick = () => {
+      modal.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      lockScroll(false);
+    };
+    modal.addEventListener('click', (e) => { if (e.target === modal) $('#closeModal').click(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && modal.classList.contains('open')) $('#closeModal').click(); });
 
-/* ====================== Service Worker ====================== */
-function registerSW(){ if(!('serviceWorker' in navigator)) return; navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      ['tmdb', 'manual'].forEach(n => document.getElementById('tab-' + n).style.display = (t.dataset.tab === n) ? 'block' : 'none');
+    }));
 
-/* ====================== Boot ====================== */
-(async function boot(){
-  await openDB();
-  items = await getAll();
-  applyFilters();
-  route();
-  registerSW();
-})();
-</script>
+    function numOrNull(v) { const n = parseFloat(v); return isNaN(n) ? null : n; }
+    function blankToNull(v) { const s = (v || '').trim(); return s || null; }
+    function normalizeGenres(s) { return (s || '').split(',').map(g => g.trim()).filter(Boolean); }
+
+    $('#btn-add').addEventListener('click', async () => {
+      const title = $('#in-title').value.trim(); if (!title) { $('#addMsg').textContent = 'Title is required.'; return; }
+      const it = {
+        type: $('#in-type').value, title,
+        year: parseInt($('#in-year').value, 10) || null,
+        director: blankToNull($('#in-director').value),
+        imdb: numOrNull($('#in-imdb').value),
+        genres: normalizeGenres($('#in-genres').value),
+        notes: blankToNull($('#in-notes').value),
+        watched: $('#in-watched').checked,
+        imdbId: null, tmdbId: null, posterUrl: null, posterPath: null,
+        cast: [], production: [], countries: [],
+        addedAt: Date.now()
+      };
+      if (existsByIds(it)) { $('#addMsg').textContent = 'Already in your list ✋'; setTimeout(() => $('#addMsg').textContent = '', 1400); return; }
+      await addItem(it); items = await getAll(); applyFilters(); $('#addMsg').textContent = 'Added ✔'; setTimeout(() => $('#addMsg').textContent = '', 1200);
+      ['in-title','in-year','in-director','in-imdb','in-genres','in-notes'].forEach(id => document.getElementById(id).value = ''); $('#in-watched').checked = false; $('#in-type').value = 'movie';
+    });
+
+    /* ===================================================================
+       TMDb / OMDb integration
+       =================================================================== */
+    const TMDB_KEY = (window.APP_KEYS && window.APP_KEYS.TMDB) || '';
+    const OMDB_KEY = (window.APP_KEYS && window.APP_KEYS.OMDB) || '';
+    const TMDB_API = 'https://api.themoviedb.org/3';
+    if (!TMDB_KEY) console.warn('TMDb API key missing. Add it in env.js');
+
+    let tmdbCtrl;
+    const debounce = (fn, ms = 400) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
+
+    async function tmdbSearch(query, { signal } = {}) {
+      const url = `${TMDB_API}/search/multi?api_key=${encodeURIComponent(TMDB_KEY)}&query=${encodeURIComponent(query)}&include_adult=false`;
+      const r = await fetch(url, { signal }); if (!r.ok) throw new Error('TMDb search failed');
+      const data = await r.json(); return (data.results || []).filter(x => x.media_type === 'movie' || x.media_type === 'tv').slice(0, 10);
+    }
+    async function tmdbDetails(kind, id) {
+      const url = `${TMDB_API}/${kind}/${id}?api_key=${encodeURIComponent(TMDB_KEY)}&append_to_response=credits,external_ids,release_dates,content_ratings,videos,watch/providers`;
+      const r = await fetch(url); if (!r.ok) throw new Error('TMDb details failed'); return r.json();
+    }
+
+    async function fetchImdbRating(imdbId) {
+      if (!imdbId || !OMDB_KEY) return null;
+      const r = await fetch(`https://www.omdbapi.com/?apikey=${encodeURIComponent(OMDB_KEY)}&i=${encodeURIComponent(imdbId)}`);
+      if (!r.ok) return null; const d = await r.json(); const val = parseFloat(d.imdbRating); return isNaN(val) ? null : val;
+    }
+
+    async function runTmdbSearch() {
+      const q = $('#tmdb-query').value.trim(); if (!q) return;
+      if (tmdbCtrl) tmdbCtrl.abort();
+      tmdbCtrl = new AbortController();
+      const container = $('#tmdb-results'); container.innerHTML = '<div class="muted">Searching…</div>';
+      try {
+        const results = await tmdbSearch(q, { signal: tmdbCtrl.signal });
+        if (!results.length) { container.innerHTML = '<div class="muted">No results.</div>'; return; }
+        const img = (path) => path ? `
+          <img
+            src="https://image.tmdb.org/t/p/w185${path}"
+            srcset="
+              https://image.tmdb.org/t/p/w92${path} 92w,
+              https://image.tmdb.org/t/p/w154${path} 154w,
+              https://image.tmdb.org/t/p/w185${path} 185w"
+            sizes="(max-width: 640px) 25vw, 48px"
+            loading="lazy" decoding="async" alt=""
+            style="width:44px; height:66px; object-fit:cover; border-radius:8px">` : '';
+
+        container.innerHTML = results.map(r => {
+          const title = r.title || r.name, year = (r.release_date || r.first_air_date || '').slice(0, 4);
+          return `<div class="item">
+            <div style="display:flex;gap:10px;align-items:center">
+              ${img(r.poster_path)}
+              <div><strong>${escapeHTML(title)}</strong> ${year ? `<small>(${year})</small>` : ''}<div class="muted">${r.media_type.toUpperCase()}</div></div>
+            </div>
+            <button class="btn-ghost" data-import="${r.media_type}:${r.id}">Add</button>
+          </div>`;
+        }).join('');
+        [...container.querySelectorAll('[data-import]')].forEach(b => {
+          const [k, i] = b.dataset.import.split(':');
+          const dup = items.some(x => x.tmdbId === parseInt(i, 10) && x.type === (k === 'tv' ? 'show' : 'movie'));
+          if (dup) { b.disabled = true; b.textContent = 'Added'; }
+        });
+      } catch (e) {
+        if (e.name !== 'AbortError') container.innerHTML = '<div class="muted">Search failed.</div>';
+      }
+    }
+    $('#btn-tmdb-search').addEventListener('click', runTmdbSearch);
+    document.getElementById('tmdb-query').addEventListener('input', debounce(runTmdbSearch, 350));
+
+    document.getElementById('tmdb-results').addEventListener('click', async e => {
+      const btn = e.target.closest('[data-import]'); if (!btn) return;
+      const [kind, idStr] = btn.dataset.import.split(':'), id = parseInt(idStr, 10);
+      try {
+        const d = await tmdbDetails(kind, id);
+        // Core people/companies
+        let director = null;
+        if (kind === 'movie') {
+          const dir = (d.credits?.crew || []).find(p => p.job === 'Director');
+          director = dir ? dir.name : null;
+        } else { // tv
+          director = (d.created_by || []).map(x => x.name).join(', ') || null;
+        }
+        const cast        = (d.credits?.cast || []).slice(0, 10).map(p => p.name);
+        const production  = (d.production_companies || []).map(p => p.name);
+        const networks    = (d.networks || []).map(n => n.name);
+
+        // Geography / language
+        const countries = [
+          ...(d.production_countries || []).map(c => c.iso_3166_1 || c.name),
+          ...(Array.isArray(d.origin_country) ? d.origin_country : [])
+        ].filter(Boolean);
+        const languages = (d.spoken_languages || []).map(l => l.english_name || l.name || l.iso_639_1);
+
+        // Times
+        const runtime        = d.runtime || null; // minutes (movie)
+        const epRuntime      = Array.isArray(d.episode_run_time) && d.episode_run_time.length ? Math.round(d.episode_run_time.reduce((a, b) => a + b) / d.episode_run_time.length) : null;
+        const numSeasons     = d.number_of_seasons ?? null;
+        const numEpisodes    = d.number_of_episodes ?? null;
+
+        // Status / dates
+        const status      = d.status || null;
+        const releaseDate = d.release_date || null;
+        const firstAir    = d.first_air_date || null;
+        const lastAir     = d.last_air_date || null;
+
+        // Media / ids
+        const posterPath = d.poster_path || null;
+        const posterUrl  = posterPath ? `https://image.tmdb.org/t/p/w342${posterPath}` : null;
+        const imdbId     = d.external_ids?.imdb_id || null;
+        const imdb       = (await fetchImdbRating(imdbId)) ?? (typeof d.vote_average === 'number' ? Math.round(d.vote_average * 10) / 10 : null);
+
+        // Extras
+        const certification = pickCertification(d, kind === 'tv' ? 'tv' : 'movie');
+        const budget        = d.budget ?? null;
+        const revenue       = d.revenue ?? null;
+        const homepage      = d.homepage || null;
+        const trailerUrl    = pickTrailerUrl(d);
+        const { names: providerNames, link: watchLink } = pickWatchInfo(d);
+
+        const item = {
+          type: kind === 'tv' ? 'show' : 'movie',
+          title: d.title || d.name,
+          year: parseInt((d.release_date || d.first_air_date || '').slice(0, 4), 10) || null,
+          director,
+          imdb,
+          genres: (d.genres || []).map(g => g.name),
+          notes: d.overview || null,
+          posterUrl, posterPath, watched: false, imdbId, tmdbId: d.id, addedAt: Date.now(),
+
+          // NEW fields
+          cast, production, networks,
+          countries, languages,
+          runtime, epRuntime, numSeasons, numEpisodes,
+          status, releaseDate, firstAir, lastAir,
+          certification, budget, revenue,
+          homepage, trailerUrl, providers: providerNames, watchLink
+        };
+        if (existsByIds(item)) { alert('Already in your list.'); return; }
+        await addItem(item);
+        items = await getAll();
+        applyFilters();
+        document.getElementById('addMsg').textContent = 'Added from TMDb ✔'; setTimeout(() => document.getElementById('addMsg').textContent = '', 1200);
+      } catch (err) { alert('Import failed: ' + err.message); }
+    });
+
+    /* ===================================================================
+       Input bindings (filters)
+       =================================================================== */
+    document.getElementById('omni').addEventListener('input', applyFilters);
+    document.getElementById('sortSel').addEventListener('change', applyFilters);
+    document.getElementById('chkUnwatched').addEventListener('change', applyFilters);
+
+    /* ===================================================================
+       Service Worker
+       =================================================================== */
+    function registerSW() { if (!('serviceWorker' in navigator)) return; navigator.serviceWorker.register('sw.js').catch(() => {}); }
+
+    /* ===================================================================
+       Boot
+       =================================================================== */
+    (async function boot() {
+      await openDB();
+      items = await getAll();
+      applyFilters();
+      route();
+      registerSW();
+    })();
+  </script>
 </body>
 </html>

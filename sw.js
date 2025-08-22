@@ -1,5 +1,5 @@
 // Cache-first service worker (works at / or /your-subpath/)
-const VERSION    = 'v10';
+const VERSION    = 'v11';
 const APP_CACHE  = `watchlist-app-${VERSION}`;
 const IMG_CACHE  = `watchlist-img-${VERSION}`;
 
